@@ -72,7 +72,10 @@ export const parseAsPlainDate = createParser<Temporal.PlainDate>({
  * Parser for time format selection.
  * Only accepts "12h" or "24h" values.
  */
-export const parseAsTimeFormat = parseAsStringEnum(["12h", "24h"] as const).withDefault("12h");
+export const parseAsTimeFormat = parseAsStringEnum([
+  "12h",
+  "24h",
+] as const).withDefault("12h");
 
 /**
  * Parser for home timezone ID.

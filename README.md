@@ -99,13 +99,11 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the a
 
 ### Environment Variables
 
-For production deployment, set the following environment variable:
+For production deployment, set the following environment variables:
 
 ```bash
-NEXT_PUBLIC_SITE_URL=https://your-domain.com
+OPENROUTER_API_KEY=your_openrouter_key
 ```
-
-**Important:** The URL must be a valid HTTPS URL without a trailing slash.
 
 ### Build Commands
 
