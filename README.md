@@ -29,6 +29,7 @@
 - **24-Hour Timeline Visualization** - View all timezones side-by-side on an interactive timeline
 - **Interactive Hover** - Hover over hours to see corresponding times across all timezones
 - **Drag & Drop Reordering** - Reorganize timezones by dragging them
+- **Public Holiday Labels** - Show country public holidays per timezone local date (for example `· Independence Day`)
 
 ### User Experience
 
@@ -86,6 +87,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the a
 
 - **[@vvo/tzdb](https://github.com/vvo/tzdb)** - Comprehensive timezone database
 - **[date-fns](https://date-fns.org/)** & **[date-fns-tz](https://github.com/marnusw/date-fns-tz)** - Date manipulation and timezone handling
+- **[date-holidays](https://github.com/commenthol/date-holidays)** - Country public holiday data and rules
 - **[@dnd-kit](https://dndkit.com/)** - Drag and drop functionality
 - **[nuqs](https://nuqs.47ng.com/)** - URL state management
 - **[Fuse.js](https://www.fusejs.io/)** - Fuzzy search for timezone selection
@@ -149,6 +151,16 @@ The app supports natural language commands:
 ### Sharing Configurations
 
 All timezone selections, date, and format preferences are stored in the URL. Simply copy and share the URL to let others see the same configuration.
+
+### Public Holiday Behavior
+
+Holiday labels are determined using three inputs together:
+
+1. Timezone country code (`countryCode`) from timezone metadata
+2. The selected date converted into each timezone's local calendar date (`yyyy-MM-dd`)
+3. Public holiday data from `date-holidays` for that country and year
+
+Only holidays with type `public` are shown. Timezones with missing country codes or `XX` are skipped.
 
 ---
 

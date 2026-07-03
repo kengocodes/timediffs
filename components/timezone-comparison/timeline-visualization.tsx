@@ -31,6 +31,7 @@ import {
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { SortableTimezoneRow } from "./sortable-timezone-row";
 import { TimezoneRow } from "./timezone-row";
+import { useHolidays } from "@/hooks/use-holidays";
 
 interface TimelineVisualizationProps {
   onRemoveTimezone: (timezoneId: string) => void;
@@ -84,6 +85,7 @@ export function TimelineVisualization({
   } = useTimezone();
   const [activeId, setActiveId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const holidayNamesByTimezone = useHolidays(timezoneDisplays, selectedDate);
 
   // Early return check must happen after basic hooks but before hooks that depend on data
   // However, we need to ensure all hooks are always called, so we'll handle empty state differently
@@ -261,6 +263,7 @@ export function TimelineVisualization({
                 >
                   <SortableTimezoneRow
                     display={display}
+                    holidayName={holidayNamesByTimezone[display.timezone.id]}
                     referenceHours={referenceHours}
                     highlightedColumnIndex={highlightedColumnIndex}
                     centerColumnIndex={centerColumnIndex}
@@ -280,6 +283,7 @@ export function TimelineVisualization({
               <div className="mb-4 last:mb-0 pointer-events-none w-full opacity-100">
                 <TimezoneRow
                   display={activeDisplay}
+                  holidayName={holidayNamesByTimezone[activeDisplay.timezone.id]}
                   referenceHours={referenceHours}
                   highlightedColumnIndex={highlightedColumnIndex}
                   centerColumnIndex={centerColumnIndex}

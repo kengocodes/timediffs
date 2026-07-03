@@ -12,6 +12,7 @@ import { useTimezone } from "@/contexts/timezone-context";
 
 interface TimezoneRowProps {
   display: TimezoneDisplay;
+  holidayName?: string;
   referenceHours: Date[];
   onRemove: (timezoneId: string) => void;
   onSetHome: (timezoneId: string) => void;
@@ -30,6 +31,7 @@ interface TimezoneRowProps {
  */
 export function TimezoneRow({
   display,
+  holidayName,
   referenceHours,
   onRemove,
   onSetHome,
@@ -45,6 +47,11 @@ export function TimezoneRow({
   const isMobile = useIsMobile();
   const { selectedDate, currentTime } = useTimezone();
   const infoRef = useRef<HTMLDivElement | null>(null);
+  const fullLocationLabel = display.timezone.country
+    ? holidayName
+      ? `${display.timezone.country} · ${holidayName}`
+      : display.timezone.country
+    : holidayName ?? "";
   
   // Use JavaScript-based scroll following for mobile to keep info section visible
   // This is more reliable than CSS sticky for the vertical flex layout on mobile
@@ -232,9 +239,29 @@ export function TimezoneRow({
                     {display.offsetDisplay}
                   </span>
                 </div>
-                <span className="hidden lg:block text-xs lg:text-[11px] text-slate-500 dark:text-stone-400 leading-tight tracking-tight truncate">
-                  {display.timezone.country}
-                </span>
+                <div
+                  className="hidden lg:flex items-center gap-1 min-w-0"
+                  title={fullLocationLabel}
+                >
+                  {display.timezone.country ? (
+                    <span className="text-xs lg:text-[11px] text-slate-500 dark:text-stone-400 leading-tight tracking-tight truncate">
+                      {display.timezone.country}
+                    </span>
+                  ) : null}
+                  {holidayName ? (
+                    <span className="text-xs lg:text-[11px] text-red-600 dark:text-red-400 leading-tight tracking-tight truncate">
+                      {display.timezone.country ? `· ${holidayName}` : holidayName}
+                    </span>
+                  ) : null}
+                </div>
+                {holidayName ? (
+                  <span
+                    className="lg:hidden text-[11px] text-red-600 dark:text-red-400 leading-tight tracking-tight truncate"
+                    title={fullLocationLabel}
+                  >
+                    · {holidayName}
+                  </span>
+                ) : null}
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">

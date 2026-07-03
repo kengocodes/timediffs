@@ -9,6 +9,7 @@ import { TimezoneRow } from "./timezone-row";
 
 interface SortableTimezoneRowProps {
   display: TimezoneDisplay;
+  holidayName?: string;
   referenceHours: Date[];
   onRemove: (timezoneId: string) => void;
   onSetHome: (timezoneId: string) => void;
@@ -22,6 +23,7 @@ interface SortableTimezoneRowProps {
 
 export function SortableTimezoneRow({
   display,
+  holidayName,
   referenceHours,
   onRemove,
   onSetHome,
@@ -67,6 +69,7 @@ export function SortableTimezoneRow({
     >
       <TimezoneRow
         display={display}
+        holidayName={holidayName}
         referenceHours={referenceHours}
         onRemove={onRemove}
         onSetHome={onSetHome}
