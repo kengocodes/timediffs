@@ -9,10 +9,27 @@ interface AiResponseMarkdownProps {
   className?: string;
 }
 
+function normalizeMarkdownContent(content: string): string {
+  // Some model responses escape markdown punctuation (for JSON safety),
+  // which causes visible literal tokens such as \*\*bold\*\*.
+  const unescapedMarkdown = content.replace(
+    /\\([\\`*_{}\[\]()#+\-.!|>~])/g,
+    "$1",
+  );
+
+  // Handle occasional HTML-entity encoded asterisks from model output.
+  return unescapedMarkdown
+    .replaceAll("&ast;", "*")
+    .replaceAll("&#42;", "*")
+    .replaceAll("&#x2A;", "*");
+}
+
 export function AiResponseMarkdown({
   content,
   className,
 }: AiResponseMarkdownProps) {
+  const normalizedContent = normalizeMarkdownContent(content);
+
   return (
     <div
       className={cn(
@@ -36,7 +53,7 @@ export function AiResponseMarkdown({
           ),
         }}
       >
-        {content}
+        {normalizedContent}
       </ReactMarkdown>
     </div>
   );

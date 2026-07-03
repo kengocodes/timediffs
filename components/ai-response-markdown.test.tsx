@@ -25,4 +25,18 @@ describe("AiResponseMarkdown", () => {
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
+
+  it("renders escaped markdown emphasis from model output", () => {
+    render(<AiResponseMarkdown content={"This is \\*\\*bold\\*\\* text."} />);
+
+    const boldText = screen.getByText("bold");
+    expect(boldText.tagName).toBe("STRONG");
+  });
+
+  it("renders entity-encoded markdown emphasis", () => {
+    render(<AiResponseMarkdown content={"This is &ast;&ast;bold&ast;&ast; text."} />);
+
+    const boldText = screen.getByText("bold");
+    expect(boldText.tagName).toBe("STRONG");
+  });
 });
