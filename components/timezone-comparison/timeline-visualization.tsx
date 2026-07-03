@@ -39,13 +39,13 @@ interface TimelineVisualizationProps {
 
 // Animation configuration for timeline rows
 const rowAnimationVariants = {
-  initial: { 
-    opacity: 0, 
+  initial: {
+    opacity: 0,
     y: -20,
-    scale: 0.95
+    scale: 0.95,
   },
-  animate: (index: number) => ({ 
-    opacity: 1, 
+  animate: (index: number) => ({
+    opacity: 1,
     y: 0,
     scale: 1,
     transition: {
@@ -54,17 +54,17 @@ const rowAnimationVariants = {
       damping: 30,
       mass: 0.8,
       delay: index * 0.05, // Stagger effect based on index
-    }
+    },
   }),
-  exit: { 
-    opacity: 0, 
+  exit: {
+    opacity: 0,
     y: -10,
     scale: 0.95,
     transition: {
       duration: 0.2,
-      ease: "easeOut" as const
-    }
-  }
+      ease: "easeOut" as const,
+    },
+  },
 };
 
 /**
@@ -86,7 +86,10 @@ export function TimelineVisualization({
   } = useTimezone();
   const [activeId, setActiveId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const holidayNamesByTimezone = useHolidays(timezoneDisplays, effectiveInstant);
+  const holidayNamesByTimezone = useHolidays(
+    timezoneDisplays,
+    effectiveInstant,
+  );
 
   // Early return check must happen after basic hooks but before hooks that depend on data
   // However, we need to ensure all hooks are always called, so we'll handle empty state differently
@@ -102,7 +105,7 @@ export function TimelineVisualization({
       referenceTimezoneId
         ? getTimelineHours(referenceTimezoneId, selectedDate)
         : [],
-    [referenceTimezoneId, selectedDate]
+    [referenceTimezoneId, selectedDate],
   );
 
   // Track mouse hover position - always call with a valid number
@@ -131,10 +134,10 @@ export function TimelineVisualization({
     }
 
     const refNow = currentTime.toZonedDateTimeISO(
-      referenceTimezone.timezone.id
+      referenceTimezone.timezone.id,
     );
     const index = referenceHours.findIndex(
-      (hour) => hour.hour === refNow.hour && hour.day === refNow.day
+      (hour) => hour.hour === refNow.hour && hour.day === refNow.day,
     );
 
     return index >= 0 ? index : null;
@@ -158,17 +161,19 @@ export function TimelineVisualization({
   // Always call useSensors - hooks must be called unconditionally
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   const items = useMemo(
     () => timezoneDisplays.map((d) => d.timezone.id),
-    [timezoneDisplays]
+    [timezoneDisplays],
   );
 
   const activeDisplay = useMemo(
     () => timezoneDisplays.find((d) => d.timezone.id === activeId) || null,
-    [activeId, timezoneDisplays]
+    [activeId, timezoneDisplays],
   );
 
   // Early return after all hooks have been called
@@ -264,7 +269,9 @@ export function TimelineVisualization({
               <div className="mb-4 last:mb-0 pointer-events-none w-full opacity-100">
                 <TimezoneRow
                   display={activeDisplay}
-                  holidayName={holidayNamesByTimezone[activeDisplay.timezone.id]}
+                  holidayName={
+                    holidayNamesByTimezone[activeDisplay.timezone.id]
+                  }
                   referenceHours={referenceHours}
                   highlightedColumnIndex={highlightedColumnIndex}
                   centerColumnIndex={centerColumnIndex}

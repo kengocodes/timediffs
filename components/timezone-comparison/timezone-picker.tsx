@@ -111,7 +111,7 @@ export function TimezonePicker() {
         // Search in multiple fields for better results
         if (tzData) {
           const cityMatch = tzData.mainCities?.some((city) =>
-            city.toLowerCase().includes(query)
+            city.toLowerCase().includes(query),
           );
           const countryMatch = tzData.countryName
             ?.toLowerCase()
@@ -165,7 +165,7 @@ export function TimezonePicker() {
       <CommandList
         className={cn(
           "p-1 flex-1 overflow-y-auto min-h-0",
-          isMobile ? "" : "max-h-[400px]"
+          isMobile ? "" : "max-h-[400px]",
         )}
       >
         <CommandEmpty className="py-8 text-center text-sm text-slate-600 dark:text-stone-400">

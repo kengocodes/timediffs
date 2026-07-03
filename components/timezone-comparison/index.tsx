@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Edit2, Check } from "lucide-react";
 import { TimelineVisualization } from "./timeline-visualization";
 import { TimezonePicker } from "./timezone-picker";
 import { DatePicker } from "./date-picker";
@@ -11,11 +10,9 @@ import { CopyLinkButton } from "./share-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTimezone } from "@/contexts/timezone-context";
 import { LogoIcon } from "@/components/logo-icon";
-import { Button } from "@/components/ui/button";
 import { Toast } from "@/components/ui/toast";
 import { CommandInput } from "@/components/command-input";
 import { parseTimezoneId } from "@/lib/timezone";
-import { cn } from "@/lib/utils";
 
 export function TimezoneComparison() {
   const {
@@ -24,7 +21,6 @@ export function TimezoneComparison() {
     detectedTimezone,
     clearDetectedTimezone,
   } = useTimezone();
-  const [isEditMode, setIsEditMode] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
@@ -118,17 +114,21 @@ export function TimezoneComparison() {
               </p>
             </div>
           ) : (
-            <TimelineVisualization
-              onRemoveTimezone={removeTimezone}
-              isEditMode={isEditMode}
-            />
+            <>
+              <TimelineVisualization
+                onRemoveTimezone={removeTimezone}
+              />
+              <div className="mt-3 lg:hidden">
+                <TimezonePicker />
+              </div>
+            </>
           )}
         </div>
-        
+
         {/* Spacer for fixed bottom bars (command input + footer) */}
         <div className="hidden lg:block h-48" aria-hidden="true" />
       </div>
-      
+
       {/* Fixed Command Input Bar - Desktop Only */}
       <div className="hidden lg:block fixed bottom-28 left-0 right-0 z-40">
         <div className="w-full max-w-[1920px] mx-auto px-6 py-4">
@@ -137,36 +137,18 @@ export function TimezoneComparison() {
           </div>
         </div>
       </div>
-      
+
       {/* Mobile Bottom Action Bar - Primary Actions */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/98 dark:bg-stone-900/98 backdrop-blur-md border-t border-slate-100 dark:border-stone-800 shadow-[0_-8px_24px_-4px_rgba(0,0,0,0.08)] safe-area-inset-bottom">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/98 dark:bg-stone-900/98 backdrop-blur-md border-t border-slate-100 dark:border-stone-800 shadow-[0_-4px_16px_-6px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_16px_-6px_rgba(0,0,0,0.2)] safe-area-inset-bottom">
         <div className="w-full max-w-[1920px] mx-auto px-4 py-3.5">
           <div className="flex flex-row items-center gap-2.5">
             <div className="flex-1 min-w-0">
-              <TimezonePicker />
+              <CommandInput className="mobile-command-input" />
             </div>
-            {timezoneDisplays.length > 0 && (
-              <Button
-                variant="outline"
-                onClick={() => setIsEditMode(!isEditMode)}
-                className={cn(
-                  "h-12 w-12 p-0 rounded-xl border-slate-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-slate-600 dark:text-stone-300 hover:bg-slate-50 dark:hover:bg-stone-700 hover:text-slate-800 dark:hover:text-stone-100 shrink-0 touch-manipulation transition-all duration-200",
-                  isEditMode && "bg-slate-900 dark:bg-stone-100 border-slate-900 dark:border-stone-100 text-white dark:text-stone-900 hover:bg-slate-800 dark:hover:bg-stone-200 hover:text-white dark:hover:text-stone-900"
-                )}
-                aria-label={isEditMode ? "Exit edit mode" : "Enter edit mode"}
-                title={isEditMode ? "Exit edit mode" : "Enter edit mode"}
-              >
-                {isEditMode ? (
-                  <Check className="h-5 w-5" />
-                ) : (
-                  <Edit2 className="h-5 w-5" />
-                )}
-              </Button>
-            )}
           </div>
         </div>
       </div>
-      
+
       {showToast && detectedTimezone && (
         <Toast
           message={`Detected your timezone: ${

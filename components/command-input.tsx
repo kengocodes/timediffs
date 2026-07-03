@@ -13,12 +13,20 @@ interface CommandInputProps {
   className?: string;
 }
 
-// Placeholder examples (constant, defined outside component)
-const PLACEHOLDER_EXAMPLES = [
-  "Try \"New York timezone\" or \"Compare Tokyo with London\"",
-  "Ask \"What's the time in Paris?\" or \"Sydney vs Dubai\"",
-  "Type \"Add Singapore\" or \"London and Berlin timezones\"",
-  "Enter \"Show Los Angeles time\" or \"India vs California\"",
+// Desktop placeholder examples (constant, defined outside component)
+const DESKTOP_PLACEHOLDER_EXAMPLES = [
+  'Try "New York timezone" or "Compare Tokyo with London"',
+  'Ask "What\'s the time in Paris?" or "Sydney vs Dubai"',
+  'Type "Add Singapore" or "London and Berlin timezones"',
+  'Enter "Show Los Angeles time" or "India vs California"',
+] as const;
+
+// Mobile placeholder examples kept short for narrow screens
+const MOBILE_PLACEHOLDER_EXAMPLES = [
+  "Ask in natural language",
+  "e.g. what time to call my mom in Manila?",
+  "e.g. overlap hours for SF and Berlin?",
+  "e.g. compare Tokyo and New York",
 ] as const;
 
 export function CommandInput({ className }: CommandInputProps) {
@@ -37,6 +45,11 @@ export function CommandInput({ className }: CommandInputProps) {
   const [answerText, setAnswerText] = useState<string | null>(null);
   const validTimezoneIds = useMemo(() => new Set(getAllTimezoneIds()), []);
 
+  const isMobile = className?.includes("mobile-command-input");
+  const placeholderExamples = isMobile
+    ? MOBILE_PLACEHOLDER_EXAMPLES
+    : DESKTOP_PLACEHOLDER_EXAMPLES;
+
   // Rotate placeholder only when input is empty
   useEffect(() => {
     if (placeholderIntervalRef.current) {
@@ -45,7 +58,7 @@ export function CommandInput({ className }: CommandInputProps) {
 
     if (!input.trim()) {
       placeholderIntervalRef.current = setInterval(() => {
-        setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDER_EXAMPLES.length);
+        setPlaceholderIndex((prev) => (prev + 1) % placeholderExamples.length);
       }, 5000);
     }
 
@@ -54,7 +67,7 @@ export function CommandInput({ className }: CommandInputProps) {
         clearInterval(placeholderIntervalRef.current);
       }
     };
-  }, [input]);
+  }, [input, placeholderExamples]);
 
   // Cleanup interval on unmount
   useEffect(() => {
@@ -64,8 +77,6 @@ export function CommandInput({ className }: CommandInputProps) {
       }
     };
   }, []);
-
-  const isMobile = className?.includes("mobile-command-input");
 
   const normalizeTimezoneId = (value: string | null): string | null => {
     if (!value) {
@@ -77,13 +88,16 @@ export function CommandInput({ className }: CommandInputProps) {
     }
 
     // Strip common trailing/leading punctuation when the model leaks JSON tokens.
-    const cleaned = trimmed.replace(/^[^A-Za-z0-9_+\-/]+|[^A-Za-z0-9_+\-/]+$/g, "");
+    const cleaned = trimmed.replace(
+      /^[^A-Za-z0-9_+\-/]+|[^A-Za-z0-9_+\-/]+$/g,
+      "",
+    );
     return cleaned || null;
   };
 
   const executeActions = (actions: CommandAction[]) => {
     const activeTimezoneIds = new Set(
-      timezoneDisplays.map((display) => display.timezone.id)
+      timezoneDisplays.map((display) => display.timezone.id),
     );
     const failures: string[] = [];
     let appliedCount = 0;
@@ -150,7 +164,7 @@ export function CommandInput({ className }: CommandInputProps) {
         }
         if (!activeTimezoneIds.has(timezoneId)) {
           failures.push(
-            `Cannot set home timezone. ${timezoneId} is not in the list.`
+            `Cannot set home timezone. ${timezoneId} is not in the list.`,
           );
           continue;
         }
@@ -170,16 +184,16 @@ export function CommandInput({ className }: CommandInputProps) {
 
         if (normalizedIds.length !== activeTimezoneIds.size) {
           failures.push(
-            "Reorder action must include all currently displayed timezones."
+            "Reorder action must include all currently displayed timezones.",
           );
           continue;
         }
         const hasUnknownTimezone = normalizedIds.some(
-          (timezoneId) => !activeTimezoneIds.has(timezoneId)
+          (timezoneId) => !activeTimezoneIds.has(timezoneId),
         );
         if (hasUnknownTimezone) {
           failures.push(
-            "Reorder action included a timezone not currently displayed."
+            "Reorder action included a timezone not currently displayed.",
           );
           continue;
         }
@@ -197,7 +211,7 @@ export function CommandInput({ className }: CommandInputProps) {
     }
     if (input.length > COMMAND_QUERY_MAX_CHARS) {
       setError(
-        `Please keep messages under ${COMMAND_QUERY_MAX_CHARS} characters.`
+        `Please keep messages under ${COMMAND_QUERY_MAX_CHARS} characters.`,
       );
       return;
     }
@@ -213,7 +227,9 @@ export function CommandInput({ className }: CommandInputProps) {
         },
         body: JSON.stringify({
           query: input.trim(),
-          currentTimezoneIds: timezoneDisplays.map((display) => display.timezone.id),
+          currentTimezoneIds: timezoneDisplays.map(
+            (display) => display.timezone.id,
+          ),
         }),
       });
 
@@ -241,7 +257,7 @@ export function CommandInput({ className }: CommandInputProps) {
       setError(
         requestError instanceof Error
           ? requestError.message
-          : "Unexpected error while sending command."
+          : "Unexpected error while sending command.",
       );
     } finally {
       setIsProcessing(false);
@@ -286,7 +302,7 @@ export function CommandInput({ className }: CommandInputProps) {
             error
               ? "border-red-300 dark:border-red-800 focus-within:border-red-400 dark:focus-within:border-red-700"
               : "border-slate-200 dark:border-stone-700 focus-within:border-slate-300 dark:focus-within:border-stone-600",
-            isMobile ? "rounded-xl" : "rounded-2xl"
+            isMobile ? "rounded-xl" : "rounded-2xl",
           )}
         >
           <input
@@ -299,22 +315,26 @@ export function CommandInput({ className }: CommandInputProps) {
               setInput(value);
               if (isOverLimit) {
                 setError(
-                  `Please keep messages under ${COMMAND_QUERY_MAX_CHARS} characters.`
+                  `Please keep messages under ${COMMAND_QUERY_MAX_CHARS} characters.`,
                 );
               } else if (error) {
                 setError(null);
               }
             }}
             onKeyDown={handleKeyDown}
-            placeholder={PLACEHOLDER_EXAMPLES[placeholderIndex]}
+            placeholder={placeholderExamples[placeholderIndex]}
             className={cn(
               "flex-1 bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-stone-500",
               "text-slate-900 dark:text-stone-100 font-normal caret-slate-900 dark:caret-stone-100",
               "focus:caret-slate-900 dark:focus:caret-stone-100",
-              isMobile ? "px-3 py-2.5 pr-10 text-sm" : "px-4 py-3 pr-12 text-sm"
+              isMobile
+                ? "px-3 py-3 pr-10 text-sm"
+                : "px-4 py-3 pr-12 text-sm",
             )}
             aria-label="Command input for timezone queries"
-            aria-describedby={error ? "command-error-text" : "command-helper-text"}
+            aria-describedby={
+              error ? "command-error-text" : "command-helper-text"
+            }
             disabled={isProcessing}
           />
           <button
@@ -326,7 +346,9 @@ export function CommandInput({ className }: CommandInputProps) {
               "hover:bg-slate-800 dark:hover:bg-stone-200",
               "disabled:bg-slate-200 dark:disabled:bg-stone-700 disabled:text-slate-400 dark:disabled:text-stone-500",
               "focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-stone-500 focus:ring-offset-2",
-              isMobile ? "right-1.5 p-1.5 rounded-lg" : "right-2 p-2 rounded-lg"
+              isMobile
+                ? "right-1.5 p-1.5 rounded-lg"
+                : "right-2 p-2 rounded-lg",
             )}
             aria-label="Execute command"
           >
@@ -334,7 +356,7 @@ export function CommandInput({ className }: CommandInputProps) {
               <Loader2
                 className={cn(
                   "animate-spin",
-                  isMobile ? "h-3.5 w-3.5" : "h-4 w-4"
+                  isMobile ? "h-3.5 w-3.5" : "h-4 w-4",
                 )}
               />
             ) : (
@@ -347,11 +369,17 @@ export function CommandInput({ className }: CommandInputProps) {
       {!isMobile && (
         <div className="mt-2 px-1 min-h-[20px]">
           {error ? (
-            <p id="command-error-text" className="text-xs text-red-600 dark:text-red-400">
+            <p
+              id="command-error-text"
+              className="text-xs text-red-600 dark:text-red-400"
+            >
               {error}
             </p>
           ) : (
-            <p id="command-helper-text" className="text-xs text-slate-500 dark:text-stone-400">
+            <p
+              id="command-helper-text"
+              className="text-xs text-slate-500 dark:text-stone-400"
+            >
               Ask in natural language • Powered by OpenRouter.
             </p>
           )}
