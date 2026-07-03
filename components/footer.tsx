@@ -1,7 +1,21 @@
 import Link from "next/link";
+import type { SVGProps } from "react";
 import { siteConfig } from "@/lib/seo";
-import { Github } from "lucide-react";
 import { LogoIcon } from "@/components/logo-icon";
+
+function GitHubLogo({ className, ...props }: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M12 .5C5.65.5.5 5.65.5 12a11.5 11.5 0 0 0 7.86 10.93c.57.1.78-.25.78-.55l-.02-2.13c-3.2.69-3.88-1.54-3.88-1.54-.53-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.35.96.1-.75.4-1.25.73-1.54-2.55-.29-5.23-1.27-5.23-5.68 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.04 0 0 .97-.31 3.19 1.18a11.1 11.1 0 0 1 5.8 0c2.22-1.5 3.19-1.18 3.19-1.18.63 1.58.23 2.75.11 3.04.74.81 1.18 1.84 1.18 3.1 0 4.42-2.69 5.39-5.25 5.67.41.36.77 1.08.77 2.18l-.01 3.23c0 .3.2.65.79.54A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z" />
+    </svg>
+  );
+}
 
 export function Footer() {
   const githubUrl = "https://github.com/mochixlb/timediffs";
@@ -56,7 +70,7 @@ export function Footer() {
                 aria-label="View project on GitHub (opens in a new tab)"
                 title="GitHub"
               >
-                <Github className="h-4 w-4" aria-hidden="true" />
+                <GitHubLogo className="h-4 w-4" />
                 <span>GitHub</span>
               </a>
             </nav>
@@ -99,7 +113,7 @@ export function Footer() {
                 aria-label="View project on GitHub (opens in a new tab)"
                 title="GitHub"
               >
-                <Github className="h-4 w-4" aria-hidden="true" />
+                <GitHubLogo className="h-4 w-4" />
               </a>
             </div>
           </div>

@@ -302,7 +302,7 @@ export function CommandInput({ className }: CommandInputProps) {
             error
               ? "border-red-300 dark:border-red-800 focus-within:border-red-400 dark:focus-within:border-red-700"
               : "border-slate-200 dark:border-stone-700 focus-within:border-slate-300 dark:focus-within:border-stone-600",
-            isMobile ? "rounded-xl" : "rounded-2xl",
+            isMobile ? "rounded-xl min-h-12 gap-1 p-1 pl-3" : "rounded-2xl",
           )}
         >
           <input
@@ -328,7 +328,7 @@ export function CommandInput({ className }: CommandInputProps) {
               "text-slate-900 dark:text-stone-100 font-normal caret-slate-900 dark:caret-stone-100",
               "focus:caret-slate-900 dark:focus:caret-stone-100",
               isMobile
-                ? "px-3 py-3 pr-10 text-sm"
+                ? "min-h-10 flex-1 px-0 text-sm touch-manipulation"
                 : "px-4 py-3 pr-12 text-sm",
             )}
             aria-label="Command input for timezone queries"
@@ -341,26 +341,22 @@ export function CommandInput({ className }: CommandInputProps) {
             onClick={handleSubmitClick}
             disabled={!input.trim() || isProcessing}
             className={cn(
-              "absolute transition-all duration-200",
+              "transition-all duration-200",
+              !isMobile && "absolute",
               "bg-slate-900 dark:bg-stone-100 text-white dark:text-stone-900",
               "hover:bg-slate-800 dark:hover:bg-stone-200",
               "disabled:bg-slate-200 dark:disabled:bg-stone-700 disabled:text-slate-400 dark:disabled:text-stone-500",
               "focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-stone-500 focus:ring-offset-2",
               isMobile
-                ? "right-1.5 p-1.5 rounded-lg"
+                ? "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg touch-manipulation no-tap-highlight"
                 : "right-2 p-2 rounded-lg",
             )}
             aria-label="Execute command"
           >
             {isProcessing ? (
-              <Loader2
-                className={cn(
-                  "animate-spin",
-                  isMobile ? "h-3.5 w-3.5" : "h-4 w-4",
-                )}
-              />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <ArrowUp className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
+              <ArrowUp className="h-4 w-4" />
             )}
           </button>
         </div>

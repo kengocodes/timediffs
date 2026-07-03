@@ -231,7 +231,7 @@ export function TimezoneRow({
                     className="lg:hidden text-[11px] text-red-600 dark:text-red-400 leading-tight tracking-tight truncate"
                     title={fullLocationLabel}
                   >
-                    · {holidayName}
+                    {holidayName}
                   </span>
                 ) : null}
               </div>

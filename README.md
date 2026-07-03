@@ -123,9 +123,6 @@ npm start
 # Run tests
 npm test
 
-# Run tests with UI
-npm run test:ui
-
 # Run tests once
 npm run test:run
 
