@@ -8,6 +8,7 @@ import { COMMAND_QUERY_MAX_CHARS } from "@/lib/command-constraints";
 import { getAllTimezoneIds } from "@/lib/timezone";
 import { MAX_TIMEZONES } from "@/lib/url-parsers";
 import { cn } from "@/lib/utils";
+import { AiResponseMarkdown } from "@/components/ai-response-markdown";
 
 interface CommandInputProps {
   className?: string;
@@ -302,7 +303,10 @@ export function CommandInput({ className }: CommandInputProps) {
       {answerText && (
         <div className="mb-3 rounded-xl border border-slate-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-sm text-slate-700 dark:text-stone-300">
           <div className="flex items-start justify-between gap-2">
-            <p className="leading-relaxed">{answerText}</p>
+            <AiResponseMarkdown
+              content={answerText}
+              className="min-w-0 flex-1 text-slate-700 dark:text-stone-300"
+            />
             <button
               type="button"
               onClick={() => setAnswerText(null)}
