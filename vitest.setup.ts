@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
+import { Temporal } from 'temporal-polyfill';
 
 // Cleanup after each test
 afterEach(() => {
@@ -27,7 +28,7 @@ vi.mock('nuqs', async () => {
   return {
     ...actual,
     useQueryStates: vi.fn(() => [
-      { tz: [], date: new Date(), format: '12h', home: null },
+      { tz: [], date: Temporal.Now.plainDateISO(), format: '12h', home: null },
       vi.fn(),
     ]),
   };

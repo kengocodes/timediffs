@@ -1,4 +1,10 @@
-import { parseAsArrayOf, parseAsString, parseAsStringEnum } from "nuqs";
+import {
+  createParser,
+  parseAsArrayOf,
+  parseAsString,
+  parseAsStringEnum,
+} from "nuqs";
+import { Temporal } from "@/lib/temporal";
 
 /**
  * URL parsers for timezone comparison state.
@@ -45,42 +51,22 @@ export { MAX_TIMEZONES };
 
 /**
  * Parser for date selection.
- * Serializes as ISO date string: "2024-01-15"
- * Parses back to Date object, defaulting to today if invalid.
+ * Serializes as an ISO calendar date string ("2024-01-15") and parses back to
+ * a Temporal.PlainDate. Invalid values parse to null so nuqs falls back to the
+ * default. The `eq` option keeps nuqs from treating structurally equal dates
+ * as state changes (Temporal objects are compared by reference otherwise).
  */
-export const parseAsDate = {
-  parse: (value: string): Date => {
-    // Validate ISO date string format (YYYY-MM-DD)
-    const dateMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (!dateMatch) {
-      return new Date();
+export const parseAsPlainDate = createParser<Temporal.PlainDate>({
+  parse: (value: string): Temporal.PlainDate | null => {
+    try {
+      return Temporal.PlainDate.from(value, { overflow: "reject" });
+    } catch {
+      return null;
     }
-    
-    const [, year, month, day] = dateMatch;
-    const date = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
-    
-    // Validate date - if invalid, return today
-    if (isNaN(date.getTime())) {
-      return new Date();
-    }
-    
-    // Reset time to start of day
-    date.setHours(0, 0, 0, 0);
-    return date;
   },
-  serialize: (value: Date): string => {
-    // Serialize as YYYY-MM-DD format
-    const year = value.getFullYear();
-    const month = String(value.getMonth() + 1).padStart(2, "0");
-    const day = String(value.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  },
-  withDefault: (defaultValue: Date) => ({
-    parse: parseAsDate.parse,
-    serialize: parseAsDate.serialize,
-    defaultValue,
-  }),
-};
+  serialize: (value: Temporal.PlainDate): string => value.toString(),
+  eq: (a: Temporal.PlainDate, b: Temporal.PlainDate): boolean => a.equals(b),
+});
 
 /**
  * Parser for time format selection.
@@ -93,4 +79,3 @@ export const parseAsTimeFormat = parseAsStringEnum(["12h", "24h"] as const).with
  * Single string value, optional (can be null).
  */
 export const parseAsHomeTimezone = parseAsString;
-

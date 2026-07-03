@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Temporal } from "@/lib/temporal";
 import { LogoIcon } from "@/components/logo-icon";
 import { createMetadata, getWebPageStructuredData } from "@/lib/seo";
 
@@ -52,7 +53,7 @@ export default function TermsPage() {
             </h1>
             <p className="text-muted-foreground mb-8">
               Last updated:{" "}
-              {new Date().toLocaleDateString("en-US", {
+              {Temporal.Now.plainDateISO().toLocaleString("en-US", {
                 year: "numeric",
                 month: "long",
                 day: "numeric",

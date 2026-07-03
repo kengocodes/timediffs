@@ -10,6 +10,7 @@ import {
   useRef,
 } from "react";
 import { useQueryStates } from "nuqs";
+import { Temporal } from "@/lib/temporal";
 import type { Timezone, TimezoneDisplay } from "@/types";
 import {
   createTimezoneDisplay,
@@ -18,7 +19,7 @@ import {
 } from "@/lib/timezone";
 import {
   parseAsTimezoneArray,
-  parseAsDate,
+  parseAsPlainDate,
   parseAsTimeFormat,
   parseAsHomeTimezone,
   MAX_TIMEZONES,
@@ -28,8 +29,9 @@ export type TimeFormat = "12h" | "24h";
 
 interface TimezoneContextType {
   timezoneDisplays: TimezoneDisplay[];
-  selectedDate: Date;
-  setSelectedDate: (date: Date) => void;
+  /** The calendar date the user selected (defaults to today). */
+  selectedDate: Temporal.PlainDate;
+  setSelectedDate: (date: Temporal.PlainDate) => void;
   timeFormat: TimeFormat;
   setTimeFormat: (format: TimeFormat) => void;
   addTimezone: (timezoneId: string) => void;
@@ -38,7 +40,15 @@ interface TimezoneContextType {
   reorderTimezones: (newOrderIds: string[]) => void;
   detectedTimezone: string | null;
   clearDetectedTimezone: () => void;
-  currentTime: Date;
+  /** Live clock, ticking every second. */
+  currentTime: Temporal.Instant;
+  /** True when the selected date is today in the browser's timezone. */
+  isViewingToday: boolean;
+  /**
+   * The instant all displays are rendered for: the live clock when viewing
+   * today, otherwise local midnight of the selected date.
+   */
+  effectiveInstant: Temporal.Instant;
 }
 
 const TimezoneContext = createContext<TimezoneContextType | undefined>(
@@ -81,7 +91,7 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
   // Sync URL state with nuqs hooks
   const [urlState, setUrlState] = useQueryStates({
     tz: parseAsTimezoneArray,
-    date: parseAsDate.withDefault(new Date()),
+    date: parseAsPlainDate.withDefault(Temporal.Now.plainDateISO()),
     format: parseAsTimeFormat,
     home: parseAsHomeTimezone,
   });
@@ -93,7 +103,7 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
   // Detect browser timezone
   const getBrowserTimezone = useCallback((): string | null => {
     try {
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const tz = Temporal.Now.timeZoneId();
       return isValidTimezoneId(tz) ? tz : null;
     } catch {
       return null;
@@ -151,40 +161,35 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
     initializedFromUrlRef.current = true;
   }, [urlState.tz, urlState.home, getBrowserTimezone]);
 
-  // Use date from URL or default to today
-  // When viewing today, we need to update the time in real-time
-  const [currentTime, setCurrentTime] = useState(() => new Date());
+  // Live clock, updated every second for smooth real-time indicator movement
+  const [currentTime, setCurrentTime] = useState(() => Temporal.Now.instant());
 
-  // Update current time every second for smooth real-time indicator movement
   useEffect(() => {
     // Update immediately on mount
-    setCurrentTime(new Date());
+    setCurrentTime(Temporal.Now.instant());
 
     const interval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000); // Update every second for smooth real-time movement
+      setCurrentTime(Temporal.Now.instant());
+    }, 1000);
 
     return () => clearInterval(interval);
   }, []);
 
-  const selectedDate = useMemo(() => {
-    if (urlState.date) {
-      // If a date is selected from URL, use it (it will be at midnight from parser)
-      // But if it's today, use the current time instead
-      const today = new Date();
-      const isToday =
-        urlState.date.getFullYear() === today.getFullYear() &&
-        urlState.date.getMonth() === today.getMonth() &&
-        urlState.date.getDate() === today.getDate();
+  const selectedDate = urlState.date;
 
-      if (isToday) {
-        return currentTime;
-      }
-      return urlState.date;
+  const isViewingToday = useMemo(
+    () => selectedDate.equals(Temporal.Now.plainDateISO()),
+    // Recheck on every clock tick so the flag flips at midnight
+    [selectedDate, currentTime]
+  );
+
+  const effectiveInstant = useMemo(() => {
+    if (isViewingToday) {
+      return currentTime;
     }
-    // No date selected, use current time (updates in real-time)
-    return currentTime;
-  }, [urlState.date, currentTime]);
+    // Local midnight of the selected date in the browser's timezone
+    return selectedDate.toZonedDateTime(Temporal.Now.timeZoneId()).toInstant();
+  }, [isViewingToday, currentTime, selectedDate]);
 
   // Use format from URL or default to 12h
   const timeFormat = useMemo(() => {
@@ -218,10 +223,10 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
 
   const updateDisplays = useCallback(() => {
     const displays = timezones.map((tz) =>
-      createTimezoneDisplay(tz, selectedDate, timeFormat)
+      createTimezoneDisplay(tz, effectiveInstant, timeFormat)
     );
     setTimezoneDisplays(displays);
-  }, [timezones, selectedDate, timeFormat]);
+  }, [timezones, effectiveInstant, timeFormat]);
 
   useEffect(() => {
     updateDisplays();
@@ -289,7 +294,7 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const handleSetSelectedDate = useCallback(
-    (date: Date) => {
+    (date: Temporal.PlainDate) => {
       // Update URL state, which will trigger selectedDate update
       setUrlState({ date });
     },
@@ -323,6 +328,8 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
         detectedTimezone,
         clearDetectedTimezone,
         currentTime,
+        isViewingToday,
+        effectiveInstant,
       }}
     >
       {children}

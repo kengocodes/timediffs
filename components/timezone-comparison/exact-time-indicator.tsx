@@ -111,7 +111,7 @@ export function ExactTimeIndicator({
   if (
     isMobile ||
     position.columnIndex === null ||
-    !position.exactTimeInTimezone ||
+    !position.exactTime ||
     totalColumns === 0 ||
     !measurements
   ) {
@@ -126,7 +126,7 @@ export function ExactTimeIndicator({
 
   // Format the exact time for display
   const formattedTime = formatTime(
-    position.exactTimeInTimezone,
+    position.exactTime,
     referenceTimezoneId,
     timeFormat
   );

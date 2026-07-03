@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { Temporal } from '@/lib/temporal';
 import {
   parseTimezoneId,
   createTimezoneFromId,
@@ -10,7 +11,6 @@ import {
   getTimeOfDay,
   getTimelineHours,
 } from './timezone';
-import type { Timezone } from '@/types';
 
 describe('parseTimezoneId', () => {
   it('should parse valid IANA timezone ID', () => {
@@ -108,28 +108,34 @@ describe('getAllTimezoneIds', () => {
 });
 
 describe('formatTime', () => {
-  const testDate = new Date('2024-01-15T14:30:00Z');
+  const testInstant = Temporal.Instant.from('2024-01-15T14:30:00Z');
 
   it('should format time in 12-hour format', () => {
-    const result = formatTime(testDate, 'America/New_York', '12h');
-    // Should be in format like "9:30am" or "2:30pm"
-    expect(result).toMatch(/^\d{1,2}:\d{2}(am|pm)$/);
+    const result = formatTime(testInstant, 'America/New_York', '12h');
+    // 14:30 UTC = 9:30am in New York (EST)
+    expect(result).toBe('9:30am');
   });
 
   it('should format time in 24-hour format', () => {
-    const result = formatTime(testDate, 'America/New_York', '24h');
-    // Should be in format HH:mm
-    expect(result).toMatch(/^\d{2}:\d{2}$/);
+    const result = formatTime(testInstant, 'America/New_York', '24h');
+    expect(result).toBe('09:30');
   });
 
   it('should default to 12-hour format', () => {
-    const result = formatTime(testDate, 'America/New_York');
+    const result = formatTime(testInstant, 'America/New_York');
     expect(result).toMatch(/^\d{1,2}:\d{2}(am|pm)$/);
   });
 
+  it('should format noon and midnight correctly in 12-hour format', () => {
+    const noon = Temporal.Instant.from('2024-01-15T12:00:00Z');
+    const midnight = Temporal.Instant.from('2024-01-15T00:00:00Z');
+    expect(formatTime(noon, 'UTC', '12h')).toBe('12:00pm');
+    expect(formatTime(midnight, 'UTC', '12h')).toBe('12:00am');
+  });
+
   it('should handle different timezones correctly', () => {
-    const nyResult = formatTime(testDate, 'America/New_York', '24h');
-    const londonResult = formatTime(testDate, 'Europe/London', '24h');
+    const nyResult = formatTime(testInstant, 'America/New_York', '24h');
+    const londonResult = formatTime(testInstant, 'Europe/London', '24h');
     // Times should be different for different timezones
     expect(nyResult).not.toBe(londonResult);
   });
@@ -137,17 +143,17 @@ describe('formatTime', () => {
 
 describe('formatDateDisplay', () => {
   it('should format date in readable format', () => {
-    const testDate = new Date('2024-01-15T14:30:00Z');
-    const result = formatDateDisplay(testDate, 'America/New_York');
+    const testInstant = Temporal.Instant.from('2024-01-15T14:30:00Z');
+    const result = formatDateDisplay(testInstant, 'America/New_York');
     // Should be in format like "Mon, Jan 15"
     expect(result).toMatch(/^[A-Z][a-z]{2}, [A-Z][a-z]{2} \d{1,2}$/);
   });
 
   it('should handle different dates', () => {
-    const date1 = new Date('2024-01-15T14:30:00Z');
-    const date2 = new Date('2024-12-25T14:30:00Z');
-    const result1 = formatDateDisplay(date1, 'America/New_York');
-    const result2 = formatDateDisplay(date2, 'America/New_York');
+    const instant1 = Temporal.Instant.from('2024-01-15T14:30:00Z');
+    const instant2 = Temporal.Instant.from('2024-12-25T14:30:00Z');
+    const result1 = formatDateDisplay(instant1, 'America/New_York');
+    const result2 = formatDateDisplay(instant2, 'America/New_York');
     expect(result1).not.toBe(result2);
   });
 });
@@ -163,56 +169,49 @@ describe('getOffsetDisplay', () => {
   it('should return short timezone code when available', () => {
     const timezone = createTimezoneFromId('America/New_York');
     const result = getOffsetDisplay(timezone);
-    // Should be either EST/EDT or UTC±N format
-    expect(result).toMatch(/^(EST|EDT|UTC[+-]\d+|[A-Z]{2,4})$/);
+    // Should be either EST/EDT or ±N format
+    expect(result).toMatch(/^(EST|EDT|[+-]\d+|[A-Z]{2,4})$/);
   });
 
-  it('should handle different dates for DST', () => {
+  it('should reflect DST in offset for different dates', () => {
     const timezone = createTimezoneFromId('America/New_York');
-    const winterDate = new Date('2024-01-15T12:00:00Z');
-    const summerDate = new Date('2024-07-15T12:00:00Z');
-    const winterResult = getOffsetDisplay(timezone, winterDate);
-    const summerResult = getOffsetDisplay(timezone, summerDate);
-    // Results might be different due to DST
-    expect(typeof winterResult).toBe('string');
-    expect(typeof summerResult).toBe('string');
+    const winterInstant = Temporal.Instant.from('2024-01-15T12:00:00Z');
+    const summerInstant = Temporal.Instant.from('2024-07-15T12:00:00Z');
+    expect(getOffsetDisplay(timezone, winterInstant)).toBe('EST');
+    expect(getOffsetDisplay(timezone, summerInstant)).toBe('EDT');
   });
 });
 
 describe('createTimezoneDisplay', () => {
   it('should create complete timezone display object', () => {
     const timezone = createTimezoneFromId('America/New_York');
-    const testDate = new Date();
-    const result = createTimezoneDisplay(timezone, testDate, '12h');
+    const result = createTimezoneDisplay(timezone, Temporal.Now.instant(), '12h');
 
     expect(result).toHaveProperty('timezone');
-    expect(result).toHaveProperty('currentTime');
     expect(result).toHaveProperty('formattedTime');
     expect(result).toHaveProperty('formattedDate');
     expect(result).toHaveProperty('offsetDisplay');
     expect(result.timezone).toEqual(timezone);
-    expect(result.currentTime).toBeInstanceOf(Date);
   });
 
-  it('should use provided date', () => {
+  it('should use provided instant', () => {
     const timezone = createTimezoneFromId('America/New_York');
-    const testDate = new Date('2024-01-15T14:30:00Z');
-    const result = createTimezoneDisplay(timezone, testDate, '24h');
-    expect(result.currentTime).toEqual(testDate);
+    const testInstant = Temporal.Instant.from('2024-01-15T14:30:00Z');
+    const result = createTimezoneDisplay(timezone, testInstant, '24h');
+    expect(result.formattedTime).toBe('09:30');
   });
 
   it('should use provided time format', () => {
     const timezone = createTimezoneFromId('America/New_York');
-    const testDate = new Date('2024-01-15T14:30:00Z');
-    const result12h = createTimezoneDisplay(timezone, testDate, '12h');
-    const result24h = createTimezoneDisplay(timezone, testDate, '24h');
+    const testInstant = Temporal.Instant.from('2024-01-15T14:30:00Z');
+    const result12h = createTimezoneDisplay(timezone, testInstant, '12h');
+    const result24h = createTimezoneDisplay(timezone, testInstant, '24h');
     expect(result12h.formattedTime).not.toBe(result24h.formattedTime);
   });
 
-  it('should default to current date and 12h format', () => {
+  it('should default to current instant and 12h format', () => {
     const timezone = createTimezoneFromId('America/New_York');
     const result = createTimezoneDisplay(timezone);
-    expect(result.currentTime).toBeInstanceOf(Date);
     expect(result.formattedTime).toMatch(/^\d{1,2}:\d{2}(am|pm)$/);
   });
 });
@@ -248,53 +247,56 @@ describe('getTimeOfDay', () => {
 });
 
 describe('getTimelineHours', () => {
-  it('should return array of 24 Date objects', () => {
-    const testDate = new Date('2024-01-15T12:00:00Z');
+  const testDate = Temporal.PlainDate.from('2024-01-15');
+
+  it('should return array of 24 ZonedDateTime objects in the target timezone', () => {
     const result = getTimelineHours('America/New_York', testDate);
-    expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(24);
     result.forEach((hour) => {
-      expect(hour).toBeInstanceOf(Date);
+      expect(hour).toBeInstanceOf(Temporal.ZonedDateTime);
+      expect(hour.timeZoneId).toBe('America/New_York');
     });
   });
 
-  it('should return hours for the correct date', () => {
-    const testDate = new Date('2024-01-15T12:00:00Z');
+  it('should start at local midnight of the requested date', () => {
     const result = getTimelineHours('America/New_York', testDate);
-    // All hours should be valid dates
-    result.forEach((hour) => {
-      expect(hour.getTime()).not.toBeNaN();
+    expect(result[0].hour).toBe(0);
+    expect(result[0].toPlainDate().equals(testDate)).toBe(true);
+  });
+
+  it('should cover hours 0 through 23 on a regular day', () => {
+    const result = getTimelineHours('America/New_York', testDate);
+    result.forEach((hour, i) => {
+      expect(hour.hour).toBe(i);
     });
   });
 
   it('should handle different timezones', () => {
-    const testDate = new Date('2024-01-15T12:00:00Z');
     const nyResult = getTimelineHours('America/New_York', testDate);
     const londonResult = getTimelineHours('Europe/London', testDate);
-    // Times should be different for different timezones
-    expect(nyResult[0].getTime()).not.toBe(londonResult[0].getTime());
+    // Midnight instants should differ between timezones
+    expect(nyResult[0].epochMilliseconds).not.toBe(
+      londonResult[0].epochMilliseconds
+    );
   });
 
-  it('should return consecutive hours', () => {
-    const testDate = new Date('2024-01-15T12:00:00Z');
+  it('should return consecutive hours exactly 1 hour apart', () => {
     const result = getTimelineHours('America/New_York', testDate);
-    // Each hour should be approximately 1 hour after the previous
     for (let i = 1; i < result.length; i++) {
-      const diff = result[i].getTime() - result[i - 1].getTime();
-      const hoursDiff = diff / (1000 * 60 * 60);
-      expect(hoursDiff).toBeCloseTo(1, 0);
+      const diffMs =
+        result[i].epochMilliseconds - result[i - 1].epochMilliseconds;
+      expect(diffMs).toBe(60 * 60 * 1000);
     }
   });
 
-  it('should handle DST transitions', () => {
-    // Test a date that might be near DST transition
-    const testDate = new Date('2024-03-10T12:00:00Z'); // Near spring DST in US
-    const result = getTimelineHours('America/New_York', testDate);
+  it('should handle DST spring-forward transitions', () => {
+    // 2024-03-10: US spring DST; 2:00-3:00am does not exist in New York
+    const dstDate = Temporal.PlainDate.from('2024-03-10');
+    const result = getTimelineHours('America/New_York', dstDate);
     expect(result.length).toBe(24);
-    result.forEach((hour) => {
-      expect(hour).toBeInstanceOf(Date);
-    });
+    expect(result[0].hour).toBe(0);
+    // The 2am hour is skipped, so hour labels jump from 1 to 3
+    const hours = result.map((h) => h.hour);
+    expect(hours).not.toContain(2);
   });
 });
-
-

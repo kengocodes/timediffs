@@ -86,7 +86,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the a
 ### Key Libraries
 
 - **[@vvo/tzdb](https://github.com/vvo/tzdb)** - Comprehensive timezone database
-- **[date-fns](https://date-fns.org/)** & **[date-fns-tz](https://github.com/marnusw/date-fns-tz)** - Date manipulation and timezone handling
+- **[Temporal](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Temporal)** (via [temporal-polyfill](https://github.com/fullcalendar/temporal-polyfill)) - Date, time, and timezone handling
 - **[date-holidays](https://github.com/commenthol/date-holidays)** - Country public holiday data and rules
 - **[@dnd-kit](https://dndkit.com/)** - Drag and drop functionality
 - **[nuqs](https://nuqs.47ng.com/)** - URL state management

@@ -4,13 +4,14 @@ import { useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
+import { Temporal } from "@/lib/temporal";
 import type { TimezoneDisplay } from "@/types";
 import { TimezoneRow } from "./timezone-row";
 
 interface SortableTimezoneRowProps {
   display: TimezoneDisplay;
   holidayName?: string;
-  referenceHours: Date[];
+  referenceHours: Temporal.ZonedDateTime[];
   onRemove: (timezoneId: string) => void;
   onSetHome: (timezoneId: string) => void;
   highlightedColumnIndex?: number | null;

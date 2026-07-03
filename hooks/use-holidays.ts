@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { formatInTimeZone } from "date-fns-tz";
+import { Temporal } from "@/lib/temporal";
 import type { TimezoneDisplay } from "@/types";
 
 type HolidayNameByTimezone = Record<string, string>;
@@ -105,24 +105,22 @@ function areHolidayMapsEqual(
 
 export function useHolidays(
   timezoneDisplays: TimezoneDisplay[],
-  selectedDate: Date
+  instant: Temporal.Instant
 ): HolidayNameByTimezone {
   const [holidayNamesByTimezone, setHolidayNamesByTimezone] =
     useState<HolidayNameByTimezone>({});
 
   const lookupData = useMemo(() => {
     const items = timezoneDisplays.map((display) => {
-      const localDate = formatInTimeZone(
-        selectedDate,
-        display.timezone.id,
-        "yyyy-MM-dd"
-      );
+      const localDate = instant
+        .toZonedDateTimeISO(display.timezone.id)
+        .toPlainDate();
 
       return {
         timezoneId: display.timezone.id,
         countryCode: display.timezone.countryCode,
-        localDate,
-        year: Number(localDate.slice(0, 4)),
+        localDate: localDate.toString(), // "yyyy-MM-dd", matching holiday keys
+        year: localDate.year,
       };
     });
 
@@ -134,7 +132,7 @@ export function useHolidays(
       .join("|");
 
     return { items, signature };
-  }, [timezoneDisplays, selectedDate]);
+  }, [timezoneDisplays, instant]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -142,7 +140,7 @@ export function useHolidays(
     const updateHolidays = async () => {
       const entries = await Promise.all(
         lookupData.items.map(async ({ timezoneId, countryCode, localDate, year }) => {
-          if (!isCountryCodeSupported(countryCode) || Number.isNaN(year)) {
+          if (!isCountryCodeSupported(countryCode)) {
             return [timezoneId, undefined] as const;
           }
 

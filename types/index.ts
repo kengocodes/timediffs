@@ -12,7 +12,6 @@ export interface Timezone {
 
 export interface TimezoneDisplay {
   timezone: Timezone;
-  currentTime: Date;
   formattedTime: string;
   formattedDate: string;
   offsetDisplay: string;

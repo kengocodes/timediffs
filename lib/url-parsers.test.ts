@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import { Temporal } from '@/lib/temporal';
 import {
   parseAsTimezoneArray,
-  parseAsDate,
+  parseAsPlainDate,
   parseAsTimeFormat,
   parseAsHomeTimezone,
   MAX_TIMEZONES,
@@ -106,86 +107,82 @@ describe('parseAsTimezoneArray', () => {
   });
 });
 
-describe('parseAsDate', () => {
+describe('parseAsPlainDate', () => {
   describe('parse', () => {
     it('should parse valid ISO date string', () => {
-      const result = parseAsDate.parse('2024-01-15');
-      expect(result).toBeInstanceOf(Date);
-      expect(result.getFullYear()).toBe(2024);
-      expect(result.getMonth()).toBe(0); // January is 0
-      expect(result.getDate()).toBe(15);
+      const result = parseAsPlainDate.parse('2024-01-15');
+      expect(result).toBeInstanceOf(Temporal.PlainDate);
+      expect(result?.year).toBe(2024);
+      expect(result?.month).toBe(1);
+      expect(result?.day).toBe(15);
     });
 
-    it('should return today for invalid format', () => {
-      const result = parseAsDate.parse('invalid-date');
-      expect(result).toBeInstanceOf(Date);
-      // Should be a valid date (today)
-      expect(result.getTime()).not.toBeNaN();
+    it('should return null for invalid format', () => {
+      expect(parseAsPlainDate.parse('invalid-date')).toBeNull();
     });
 
-    it('should return today for malformed date', () => {
-      const result = parseAsDate.parse('2024-13-45'); // Invalid month/day
-      expect(result).toBeInstanceOf(Date);
-      expect(result.getTime()).not.toBeNaN();
-    });
-
-    it('should reset time to start of day', () => {
-      const result = parseAsDate.parse('2024-01-15');
-      expect(result.getHours()).toBe(0);
-      expect(result.getMinutes()).toBe(0);
-      expect(result.getSeconds()).toBe(0);
-      expect(result.getMilliseconds()).toBe(0);
+    it('should return null for out-of-range dates', () => {
+      expect(parseAsPlainDate.parse('2024-13-45')).toBeNull();
+      expect(parseAsPlainDate.parse('2023-02-29')).toBeNull(); // not a leap year
     });
 
     it('should handle leap year dates', () => {
-      const result = parseAsDate.parse('2024-02-29');
-      expect(result.getFullYear()).toBe(2024);
-      expect(result.getMonth()).toBe(1); // February
-      expect(result.getDate()).toBe(29);
+      const result = parseAsPlainDate.parse('2024-02-29');
+      expect(result?.year).toBe(2024);
+      expect(result?.month).toBe(2);
+      expect(result?.day).toBe(29);
     });
 
     it('should handle different months', () => {
-      const jan = parseAsDate.parse('2024-01-15');
-      const dec = parseAsDate.parse('2024-12-25');
-      expect(jan.getMonth()).toBe(0);
-      expect(dec.getMonth()).toBe(11);
+      const jan = parseAsPlainDate.parse('2024-01-15');
+      const dec = parseAsPlainDate.parse('2024-12-25');
+      expect(jan?.month).toBe(1);
+      expect(dec?.month).toBe(12);
     });
 
     it('should reject non-ISO format dates', () => {
-      const result1 = parseAsDate.parse('01/15/2024');
-      const result2 = parseAsDate.parse('15-01-2024');
-      // Should return today for invalid formats
-      expect(result1).toBeInstanceOf(Date);
-      expect(result2).toBeInstanceOf(Date);
+      expect(parseAsPlainDate.parse('01/15/2024')).toBeNull();
+      expect(parseAsPlainDate.parse('15-01-2024')).toBeNull();
     });
   });
 
   describe('serialize', () => {
     it('should serialize date to ISO format', () => {
-      const date = new Date(2024, 0, 15); // January 15, 2024
-      const result = parseAsDate.serialize(date);
-      expect(result).toBe('2024-01-15');
+      const date = Temporal.PlainDate.from('2024-01-15');
+      expect(parseAsPlainDate.serialize(date)).toBe('2024-01-15');
     });
 
     it('should pad single-digit months and days', () => {
-      const date = new Date(2024, 0, 5); // January 5, 2024
-      const result = parseAsDate.serialize(date);
-      expect(result).toBe('2024-01-05');
+      const date = Temporal.PlainDate.from({ year: 2024, month: 1, day: 5 });
+      expect(parseAsPlainDate.serialize(date)).toBe('2024-01-05');
     });
 
-    it('should handle different dates correctly', () => {
-      const date1 = new Date(2024, 11, 25); // December 25, 2024
-      const date2 = new Date(2024, 0, 1); // January 1, 2024
-      expect(parseAsDate.serialize(date1)).toBe('2024-12-25');
-      expect(parseAsDate.serialize(date2)).toBe('2024-01-01');
+    it('should round-trip through parse and serialize', () => {
+      const serialized = '2024-12-25';
+      const parsed = parseAsPlainDate.parse(serialized);
+      expect(parsed && parseAsPlainDate.serialize(parsed)).toBe(serialized);
+    });
+  });
+
+  describe('eq', () => {
+    it('should treat structurally equal dates as equal', () => {
+      const a = Temporal.PlainDate.from('2024-01-15');
+      const b = Temporal.PlainDate.from('2024-01-15');
+      expect(parseAsPlainDate.eq?.(a, b)).toBe(true);
+    });
+
+    it('should treat different dates as not equal', () => {
+      const a = Temporal.PlainDate.from('2024-01-15');
+      const b = Temporal.PlainDate.from('2024-01-16');
+      expect(parseAsPlainDate.eq?.(a, b)).toBe(false);
     });
   });
 
   describe('withDefault', () => {
     it('should use default value when provided', () => {
-      const defaultDate = new Date(2024, 0, 1);
-      const parser = parseAsDate.withDefault(defaultDate);
-      expect(parser.defaultValue).toEqual(defaultDate);
+      const defaultDate = Temporal.PlainDate.from('2024-01-01');
+      const parser = parseAsPlainDate.withDefault(defaultDate);
+      expect(parser.defaultValue.equals(defaultDate)).toBe(true);
     });
   });
 });
@@ -257,4 +254,3 @@ describe('MAX_TIMEZONES constant', () => {
     expect(result.length).toBe(MAX_TIMEZONES);
   });
 });
-

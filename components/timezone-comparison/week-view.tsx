@@ -1,13 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import {
-  format,
-  startOfWeek,
-  endOfWeek,
-  eachDayOfInterval,
-  isSameDay,
-} from "date-fns";
+import { Temporal } from "@/lib/temporal";
+import { startOfWeekSunday, eachDayInRange } from "@/lib/calendar";
 import { useTimezone } from "@/contexts/timezone-context";
 import { cn } from "@/lib/utils";
 
@@ -19,39 +14,32 @@ import { cn } from "@/lib/utils";
 export function WeekView() {
   const { selectedDate, setSelectedDate } = useTimezone();
 
+  const today = Temporal.Now.plainDateISO();
+  const todayKey = today.toString();
+
   // Get the current week (this week) - always shows the week containing today
   const weekDays = useMemo(() => {
-    const today = new Date();
-    const weekStart = startOfWeek(today, { weekStartsOn: 0 });
-    const weekEnd = endOfWeek(today, { weekStartsOn: 0 });
-    return eachDayOfInterval({ start: weekStart, end: weekEnd });
-  }, []); // Empty dependency array - always shows current week
-
-  const today = new Date();
-
-  const handleDateSelect = (date: Date) => {
-    // Create a new date with the selected date but preserve the current time
-    const updatedDate = new Date(selectedDate);
-    updatedDate.setFullYear(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate()
-    );
-    setSelectedDate(new Date(updatedDate));
-  };
+    const weekStart = startOfWeekSunday(Temporal.PlainDate.from(todayKey));
+    return eachDayInRange(weekStart, weekStart.add({ days: 6 }));
+  }, [todayKey]);
 
   return (
     <div className="flex items-center gap-1 lg:gap-1 overflow-x-auto pb-1 -mx-1 px-1 lg:mx-0 lg:px-0 scrollbar-hide shrink-0">
       {weekDays.map((day, index) => {
-        const isSelected = isSameDay(day, selectedDate);
-        const isToday = isSameDay(day, today);
-        const dayName = format(day, "EEE"); // Mon, Tue, etc.
-        const dayNumber = format(day, "d");
+        const isSelected = day.equals(selectedDate);
+        const isToday = day.equals(today);
+        const dayName = day.toLocaleString("en-US", { weekday: "short" });
+        const fullLabel = day.toLocaleString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
 
         return (
           <button
             key={index}
-            onClick={() => handleDateSelect(day)}
+            onClick={() => setSelectedDate(day)}
             className={cn(
               "flex flex-col items-center justify-center min-w-[40px] lg:min-w-[40px] h-9 px-1 lg:px-1.5 rounded-md transition-colors cursor-pointer shrink-0",
               "text-xs font-medium",
@@ -61,14 +49,14 @@ export function WeekView() {
                 ? "bg-slate-100 dark:bg-stone-800 text-slate-900 dark:text-stone-100 hover:bg-slate-200 dark:hover:bg-stone-700"
                 : "text-slate-600 dark:text-stone-400 hover:bg-slate-200 dark:hover:bg-stone-700"
             )}
-            aria-label={`Select ${format(day, "EEEE, MMMM d, yyyy")}`}
-            title={format(day, "EEEE, MMMM d, yyyy")}
+            aria-label={`Select ${fullLabel}`}
+            title={fullLabel}
           >
             <span className="text-[10px] leading-tight opacity-75">
               {dayName}
             </span>
             <span className="text-sm leading-tight font-semibold">
-              {dayNumber}
+              {day.day}
             </span>
           </button>
         );

@@ -1,11 +1,11 @@
-import { formatInTimeZone } from "date-fns-tz";
 import { cn } from "@/lib/utils";
+import { Temporal } from "@/lib/temporal";
 import { getTimeOfDay } from "@/lib/timezone";
 import { TIME_OF_DAY_CONFIG, NEW_DAY_CONFIG } from "@/lib/timeline-constants";
 import { useTimezone } from "@/contexts/timezone-context";
 
 interface HourCellProps {
-  referenceHourDate: Date;
+  referenceHour: Temporal.ZonedDateTime;
   timezoneId: string;
   hourIndex: number;
   totalHours: number;
@@ -20,7 +20,7 @@ interface HourCellProps {
  * or date for new day markers.
  */
 export function HourCell({
-  referenceHourDate,
+  referenceHour,
   timezoneId,
   hourIndex,
   totalHours,
@@ -29,27 +29,16 @@ export function HourCell({
   isCurrentHour = false,
 }: HourCellProps) {
   const { timeFormat } = useTimezone();
-  const hourInTz = parseInt(
-    formatInTimeZone(referenceHourDate, timezoneId, "H"),
-    10
-  );
-  const hour12 = parseInt(
-    formatInTimeZone(referenceHourDate, timezoneId, "h"),
-    10
-  );
-  const amPm = formatInTimeZone(
-    referenceHourDate,
-    timezoneId,
-    "a"
-  ).toLowerCase();
+  const localTime = referenceHour.withTimeZone(timezoneId);
+  const hourInTz = localTime.hour;
+  const hour12 = ((hourInTz + 11) % 12) + 1;
+  const amPm = hourInTz < 12 ? "am" : "pm";
   const isNewDay = hourInTz === 0;
 
   const monthLabel = isNewDay
-    ? formatInTimeZone(referenceHourDate, timezoneId, "MMM")
+    ? localTime.toLocaleString("en-US", { month: "short" })
     : null;
-  const dayLabel = isNewDay
-    ? formatInTimeZone(referenceHourDate, timezoneId, "d")
-    : null;
+  const dayLabel = isNewDay ? String(localTime.day) : null;
 
   const timeOfDay = getTimeOfDay(hourInTz);
   const config = isNewDay ? NEW_DAY_CONFIG : TIME_OF_DAY_CONFIG[timeOfDay];

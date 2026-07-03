@@ -2,18 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
-import {
-  format,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  isSameMonth,
-  isSameDay,
-  addMonths,
-  subMonths,
-  startOfWeek,
-  endOfWeek,
-} from "date-fns";
+import { Temporal } from "@/lib/temporal";
+import { calendarGridDays } from "@/lib/calendar";
 import { useTimezone } from "@/contexts/timezone-context";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,48 +23,38 @@ export function DatePicker() {
   const { selectedDate, setSelectedDate } = useTimezone();
   const [open, setOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(() =>
-    startOfMonth(selectedDate)
+    selectedDate.toPlainYearMonth()
   );
   const isMobile = useIsMobile();
 
-  // Format the selected date for display
-  const formattedDate = format(selectedDate, "MMM d, yyyy");
-
   // Get calendar days for the current month view
-  const calendarDays = useMemo(() => {
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(currentMonth);
-    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 }); // Sunday
-    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
-
-    return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
-  }, [currentMonth]);
+  const calendarDays = useMemo(
+    () => calendarGridDays(currentMonth),
+    [currentMonth]
+  );
 
   // Day names (Sunday to Saturday)
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-  const handleDateSelect = (date: Date) => {
-    // Create a new date with the selected date but preserve the current time
-    const updatedDate = new Date(selectedDate);
-    updatedDate.setFullYear(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate()
-    );
-    setSelectedDate(new Date(updatedDate));
+  const handleDateSelect = (date: Temporal.PlainDate) => {
+    setSelectedDate(date);
     setOpen(false);
   };
 
   const handlePreviousMonth = () => {
-    setCurrentMonth(subMonths(currentMonth, 1));
+    setCurrentMonth(currentMonth.subtract({ months: 1 }));
   };
 
   const handleNextMonth = () => {
-    setCurrentMonth(addMonths(currentMonth, 1));
+    setCurrentMonth(currentMonth.add({ months: 1 }));
   };
 
-  const monthYearLabel = format(currentMonth, "MMMM yyyy");
-  const today = new Date();
+  // Format via PlainDate: PlainYearMonth.toLocaleString throws
+  // "Mismatched calendars" unless the locale's calendar matches ISO 8601
+  const monthYearLabel = currentMonth
+    .toPlainDate({ day: 1 })
+    .toLocaleString("en-US", { month: "long", year: "numeric" });
+  const today = Temporal.Now.plainDateISO();
 
   // Calendar content - shared between drawer and popover
   const calendarContent = (
@@ -141,9 +121,9 @@ export function DatePicker() {
       {/* Calendar Grid */}
       <div className={cn("grid grid-cols-7", isMobile ? "gap-2" : "gap-1")}>
         {calendarDays.map((day, index) => {
-          const isCurrentMonth = isSameMonth(day, currentMonth);
-          const isSelected = isSameDay(day, selectedDate);
-          const isToday = isSameDay(day, today);
+          const isCurrentMonth = day.toPlainYearMonth().equals(currentMonth);
+          const isSelected = day.equals(selectedDate);
+          const isToday = day.equals(today);
 
           return (
             <button
@@ -164,7 +144,7 @@ export function DatePicker() {
                   : "hover:bg-slate-200 dark:hover:bg-stone-700"
               )}
             >
-              {format(day, "d")}
+              {day.day}
             </button>
           );
         })}
@@ -179,7 +159,11 @@ export function DatePicker() {
     >
       <Calendar className="h-4 w-4 shrink-0 text-slate-500 dark:text-stone-400" />
       <span className="font-semibold">
-        {format(selectedDate, "EEE, MMM d")}
+        {selectedDate.toLocaleString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+        })}
       </span>
     </Button>
   );

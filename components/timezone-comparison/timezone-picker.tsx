@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Plus } from "lucide-react";
 import type { TimeZone } from "@vvo/tzdb";
+import { Temporal } from "@/lib/temporal";
 import { useTimezone } from "@/contexts/timezone-context";
 import { getAllTimezoneIds, parseTimezoneId, formatTime } from "@/lib/timezone";
 import { getTimezoneMap } from "@/lib/timezone-data";
@@ -33,7 +34,7 @@ export function TimezonePicker() {
   const { addTimezone, timezoneDisplays } = useTimezone();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState(() => Temporal.Now.instant());
   const isMobile = useIsMobile();
 
   // Update current time every minute when dropdown is open
@@ -41,11 +42,11 @@ export function TimezonePicker() {
     if (!open) return;
 
     // Update immediately
-    setCurrentTime(new Date());
+    setCurrentTime(Temporal.Now.instant());
 
     // Then update every minute
     const interval = setInterval(() => {
-      setCurrentTime(new Date());
+      setCurrentTime(Temporal.Now.instant());
     }, 60000);
 
     return () => clearInterval(interval);

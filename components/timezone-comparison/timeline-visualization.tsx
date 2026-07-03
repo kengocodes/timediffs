@@ -9,7 +9,6 @@ import { useCenterColumn } from "@/hooks/use-center-column";
 import { ColumnHighlightRing } from "./column-highlight-ring";
 import { ExactTimeIndicator } from "./exact-time-indicator";
 import { useState, useMemo, useRef } from "react";
-import { formatInTimeZone } from "date-fns-tz";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   DndContext,
@@ -82,10 +81,12 @@ export function TimelineVisualization({
     reorderTimezones,
     selectedDate,
     currentTime,
+    isViewingToday,
+    effectiveInstant,
   } = useTimezone();
   const [activeId, setActiveId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const holidayNamesByTimezone = useHolidays(timezoneDisplays, selectedDate);
+  const holidayNamesByTimezone = useHolidays(timezoneDisplays, effectiveInstant);
 
   // Early return check must happen after basic hooks but before hooks that depend on data
   // However, we need to ensure all hooks are always called, so we'll handle empty state differently
@@ -110,61 +111,36 @@ export function TimelineVisualization({
   // Column to highlight (only on hover - exact time indicator handles current time)
   const highlightedColumnIndex = hoveredColumnIndex;
 
-  // Check if viewing today's date for exact time indicator
-  const isToday = useMemo(() => {
-    const today = new Date();
-    return (
-      selectedDate.getFullYear() === today.getFullYear() &&
-      selectedDate.getMonth() === today.getMonth() &&
-      selectedDate.getDate() === today.getDate()
-    );
-  }, [selectedDate]);
-
   // Calculate exact time position for precise indicator
   const exactTimePosition = useExactTimePosition({
     referenceTimezone: referenceTimezone ?? undefined,
     referenceHours,
-    now: isToday ? currentTime : selectedDate,
-    shouldShow: isToday,
+    now: currentTime,
+    shouldShow: isViewingToday,
   });
 
   // Calculate current hour index for mobile scrolling and highlighting
   const currentHourIndex = useMemo(() => {
-    if (!isToday || !referenceTimezone || referenceHours.length === 0) {
+    if (!isViewingToday || !referenceTimezone || referenceHours.length === 0) {
       return null;
     }
 
-    const now = currentTime;
-    const refCurrentHour = parseInt(
-      formatInTimeZone(now, referenceTimezone.timezone.id, "H"),
-      10
+    const refNow = currentTime.toZonedDateTimeISO(
+      referenceTimezone.timezone.id
     );
-    const refCurrentDay = parseInt(
-      formatInTimeZone(now, referenceTimezone.timezone.id, "d"),
-      10
+    const index = referenceHours.findIndex(
+      (hour) => hour.hour === refNow.hour && hour.day === refNow.day
     );
-
-    const index = referenceHours.findIndex((hourDate) => {
-      const hourInRef = parseInt(
-        formatInTimeZone(hourDate, referenceTimezone.timezone.id, "H"),
-        10
-      );
-      const dayInRef = parseInt(
-        formatInTimeZone(hourDate, referenceTimezone.timezone.id, "d"),
-        10
-      );
-      return hourInRef === refCurrentHour && dayInRef === refCurrentDay;
-    });
 
     return index >= 0 ? index : null;
-  }, [isToday, referenceTimezone, referenceHours, currentTime]);
+  }, [isViewingToday, referenceTimezone, referenceHours, currentTime]);
 
   // Scroll to current time on mobile - always call hook, even if disabled
   useScrollToCurrentTime({
     scrollContainerRef,
     currentHourIndex,
     totalHours: referenceHours.length || 24,
-    enabled: isToday && hasTimezones,
+    enabled: isViewingToday && hasTimezones,
   });
 
   // Track center column for mobile scroll alignment indicator
