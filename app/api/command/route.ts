@@ -10,6 +10,7 @@ import {
   COMMAND_RATE_LIMIT_WINDOW_MS,
 } from "@/lib/command-constraints";
 import { evaluateCommandQueryPolicy } from "@/lib/command-safety";
+import { MAX_TIMEZONES } from "@/lib/timezone-constraints";
 
 export const runtime = "nodejs";
 
@@ -28,7 +29,8 @@ function buildSystemPrompt(): string {
     "Allowed action types: add_timezone, remove_timezone, clear_all, set_home_timezone, reorder_timezones.",
     "Use IANA timezone IDs like America/Los_Angeles and Asia/Manila.",
     "Prefer no action when the user asks a pure question.",
-    "For reorder_timezones, include all timezone IDs in final desired order.",
+    "For reorder_timezones, include all currently displayed timezone IDs exactly once, in the final desired order.",
+    "set_home_timezone works for any timezone; the app adds it to the list automatically if it is not displayed yet.",
     "For time questions, use the provided currentUtcIso timestamp as the authoritative current time.",
     "For city names, infer the canonical timezone ID when it is common and unambiguous (for example Kyoto -> Asia/Tokyo).",
     "Do not refuse normal timezone conversion questions. Answer directly using timezone conversion logic.",
@@ -198,7 +200,7 @@ export async function POST(request: Request) {
         parsedRequest.data.currentTimezoneIds,
         now,
       ),
-      maxTimezones: 8,
+      maxTimezones: MAX_TIMEZONES,
     };
 
     const response = await fetch(OPENROUTER_URL, {

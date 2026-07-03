@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
  * Enhanced search supports city names, country names, alternative names, and IANA IDs.
  */
 export function TimezonePicker() {
-  const { addTimezone, timezoneDisplays } = useTimezone();
+  const { addTimezone, timezoneDisplays, timeFormat } = useTimezone();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [currentTime, setCurrentTime] = useState(() => Temporal.Now.instant());
@@ -182,7 +182,11 @@ export function TimezonePicker() {
               const displayCity =
                 tzData?.mainCities?.[0] || parseTimezoneId(timezoneId).city;
               const countryName = tzData?.countryName;
-              const timeInTimezone = formatTime(currentTime, timezoneId);
+              const timeInTimezone = formatTime(
+                currentTime,
+                timezoneId,
+                timeFormat,
+              );
 
               return (
                 <CommandItem

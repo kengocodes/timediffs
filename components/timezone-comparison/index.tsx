@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Pencil, Check } from "lucide-react";
 import { TimelineVisualization } from "./timeline-visualization";
 import { TimezonePicker } from "./timezone-picker";
 import { DatePicker } from "./date-picker";
@@ -12,6 +13,8 @@ import { useTimezone } from "@/contexts/timezone-context";
 import { LogoIcon } from "@/components/logo-icon";
 import { Toast } from "@/components/ui/toast";
 import { CommandInput } from "@/components/command-input";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { parseTimezoneId } from "@/lib/timezone";
 
 export function TimezoneComparison() {
@@ -22,6 +25,8 @@ export function TimezoneComparison() {
     clearDetectedTimezone,
   } = useTimezone();
   const [showToast, setShowToast] = useState(false);
+  // Mobile-only edit mode exposing remove/home/reorder controls per row
+  const [isEditMode, setIsEditMode] = useState(false);
 
   useEffect(() => {
     if (detectedTimezone) {
@@ -52,6 +57,30 @@ export function TimezoneComparison() {
               </div>
               {/* Utility actions - right side */}
               <div className="flex items-center gap-1.5">
+                <Button
+                  variant="ghost"
+                  onClick={() => setIsEditMode((editing) => !editing)}
+                  className={cn(
+                    "h-9 w-9 p-0 rounded-lg text-slate-600 dark:text-stone-400",
+                    "hover:text-slate-900 dark:hover:text-stone-100 hover:bg-slate-100 dark:hover:bg-stone-800",
+                    "shrink-0 transition-colors",
+                    isEditMode &&
+                      "bg-slate-100 dark:bg-stone-800 text-slate-900 dark:text-stone-100"
+                  )}
+                  aria-label={
+                    isEditMode ? "Done editing timezones" : "Edit timezones"
+                  }
+                  aria-pressed={isEditMode}
+                  title={
+                    isEditMode ? "Done editing timezones" : "Edit timezones"
+                  }
+                >
+                  {isEditMode ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Pencil className="h-4 w-4" />
+                  )}
+                </Button>
                 <ThemeToggle />
                 <TimeFormatToggle />
                 <CopyLinkButton />
@@ -117,6 +146,7 @@ export function TimezoneComparison() {
             <>
               <TimelineVisualization
                 onRemoveTimezone={removeTimezone}
+                isEditMode={isEditMode}
               />
               <div className="mt-3 lg:hidden">
                 <TimezonePicker />

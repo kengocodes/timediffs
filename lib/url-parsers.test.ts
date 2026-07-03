@@ -38,11 +38,26 @@ describe('parseAsTimezoneArray', () => {
     });
 
     it('should enforce MAX_TIMEZONES limit', () => {
-      const manyTimezones = Array(MAX_TIMEZONES + 5)
-        .fill('America/New_York')
-        .join(',');
+      const manyTimezones = Array.from(
+        { length: MAX_TIMEZONES + 5 },
+        (_, i) => `Zone/City_${i}`
+      ).join(',');
       const result = parseAsTimezoneArray.parse(manyTimezones);
       expect(result.length).toBe(MAX_TIMEZONES);
+    });
+
+    it('should dedupe repeated timezone ids', () => {
+      const result = parseAsTimezoneArray.parse(
+        'America/New_York,America/New_York,Europe/London'
+      );
+      expect(result).toEqual(['America/New_York', 'Europe/London']);
+    });
+
+    it('should trim whitespace around ids and drop empty segments', () => {
+      const result = parseAsTimezoneArray.parse(
+        ' America/New_York , ,Europe/London '
+      );
+      expect(result).toEqual(['America/New_York', 'Europe/London']);
     });
 
     it('should handle whitespace', () => {
@@ -247,9 +262,10 @@ describe('MAX_TIMEZONES constant', () => {
   });
 
   it('should be used in parseAsTimezoneArray', () => {
-    const manyTimezones = Array(MAX_TIMEZONES + 10)
-      .fill('America/New_York')
-      .join(',');
+    const manyTimezones = Array.from(
+      { length: MAX_TIMEZONES + 10 },
+      (_, i) => `Zone/City_${i}`
+    ).join(',');
     const result = parseAsTimezoneArray.parse(manyTimezones);
     expect(result.length).toBe(MAX_TIMEZONES);
   });

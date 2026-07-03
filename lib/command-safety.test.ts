@@ -31,4 +31,23 @@ describe("evaluateCommandQueryPolicy", () => {
     expect(result.allowed).toBe(false);
     expect(result.reason).toBe("out_of_scope");
   });
+
+  // Every example the UI suggests via input placeholders must pass the policy
+  it.each([
+    "New York timezone",
+    "Compare Tokyo with London",
+    "What's the time in Paris?",
+    "Sydney vs Dubai",
+    "Add Singapore",
+    "London and Berlin timezones",
+    "Show Los Angeles time",
+    "India vs California",
+    "what time to call my mom in Manila?",
+    "overlap hours for SF and Berlin?",
+    "compare Tokyo and New York",
+  ])("allows the placeholder example %j", (query) => {
+    const result = evaluateCommandQueryPolicy(query);
+    expect(result.allowed).toBe(true);
+    expect(result.reason).toBe("in_scope");
+  });
 });

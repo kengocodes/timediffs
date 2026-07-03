@@ -22,7 +22,7 @@ export function WeekView() {
 
   return (
     <div className="flex items-center gap-1 lg:gap-1 overflow-x-auto pb-1 -mx-1 px-1 lg:mx-0 lg:px-0 scrollbar-hide shrink-0">
-      {weekDays.map((day, index) => {
+      {weekDays.map((day) => {
         const isSelected = day.equals(selectedDate);
         const isToday = day.equals(today);
         const dayName = day.toLocaleString("en-US", { weekday: "short" });
@@ -35,7 +35,7 @@ export function WeekView() {
 
         return (
           <button
-            key={index}
+            key={day.toString()}
             onClick={() => setSelectedDate(day)}
             className={cn(
               "flex flex-col items-center justify-center min-w-[40px] lg:min-w-[40px] h-9 px-1 lg:px-1.5 rounded-md transition-colors cursor-pointer shrink-0",

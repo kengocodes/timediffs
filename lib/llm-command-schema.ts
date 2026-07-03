@@ -5,6 +5,7 @@ import {
   COMMAND_ANSWER_MAX_CHARS,
   COMMAND_ERROR_MAX_CHARS,
 } from "@/lib/command-constraints";
+import { MAX_TIMEZONES } from "@/lib/timezone-constraints";
 
 export const commandActionSchema = z
   .object({
@@ -31,7 +32,10 @@ export const commandActionSchema = z
       });
     }
 
-    if (value.type === "reorder_timezones" && !value.timezoneIds) {
+    if (
+      value.type === "reorder_timezones" &&
+      (!value.timezoneIds || value.timezoneIds.length === 0)
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "timezoneIds is required for reorder_timezones",
@@ -47,7 +51,7 @@ export const commandResponseSchema = z.object({
 
 export const commandRequestSchema = z.object({
   query: z.string().min(1).max(COMMAND_QUERY_MAX_CHARS),
-  currentTimezoneIds: z.array(z.string().min(1)).max(8),
+  currentTimezoneIds: z.array(z.string().min(1)).max(MAX_TIMEZONES),
 });
 
 export type CommandAction = z.infer<typeof commandActionSchema>;

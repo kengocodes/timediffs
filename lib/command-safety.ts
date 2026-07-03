@@ -1,6 +1,6 @@
 const ALLOWLIST_PATTERNS: RegExp[] = [
-  /\b(time|timezone|utc|gmt|offset|dst)\b/i,
-  /\b(convert|conversion|difference|ahead|behind|between|compare)\b/i,
+  /\b(times?|timezones?|utc|gmt|offset|dst|hours?|clock)\b/i,
+  /\b(convert|conversion|difference|ahead|behind|between|compare|comparison|vs|versus|overlap)\b/i,
   /\b(am|pm|\d{1,2}:\d{2}|\d{1,2}\s?(am|pm))\b/i,
   /\b(today|tomorrow|yesterday|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
   /\b(jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)\b/i,

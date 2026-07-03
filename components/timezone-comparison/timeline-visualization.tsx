@@ -1,7 +1,7 @@
 "use client";
 
 import { useTimezone } from "@/contexts/timezone-context";
-import { getTimelineHours } from "@/lib/timezone";
+import { getTimelineHours, findHourIndexForInstant } from "@/lib/timezone";
 import { useTimelineHover } from "@/hooks/use-timeline-hover";
 import { useExactTimePosition } from "@/hooks/use-exact-time-position";
 import { useScrollToCurrentTime } from "@/hooks/use-scroll-to-current-time";
@@ -127,20 +127,15 @@ export function TimelineVisualization({
     shouldShow: isViewingToday,
   });
 
-  // Calculate current hour index for mobile scrolling and highlighting
+  // Calculate current hour index for mobile scrolling and highlighting.
+  // Matched by instant (not wall-clock hour) so DST fall-back days resolve
+  // to the correct one of the two repeated hours.
   const currentHourIndex = useMemo(() => {
     if (!isViewingToday || !referenceTimezone || referenceHours.length === 0) {
       return null;
     }
 
-    const refNow = currentTime.toZonedDateTimeISO(
-      referenceTimezone.timezone.id,
-    );
-    const index = referenceHours.findIndex(
-      (hour) => hour.hour === refNow.hour && hour.day === refNow.day,
-    );
-
-    return index >= 0 ? index : null;
+    return findHourIndexForInstant(referenceHours, currentTime);
   }, [isViewingToday, referenceTimezone, referenceHours, currentTime]);
 
   // Scroll to current time on mobile - always call hook, even if disabled

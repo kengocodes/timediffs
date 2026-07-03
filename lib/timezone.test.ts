@@ -10,6 +10,7 @@ import {
   createTimezoneDisplay,
   getTimeOfDay,
   getTimelineHours,
+  findHourIndexForInstant,
 } from './timezone';
 
 describe('parseTimezoneId', () => {
@@ -299,5 +300,44 @@ describe('getTimelineHours', () => {
     // The 2am hour is skipped, so hour labels jump from 1 to 3
     const hours = result.map((h) => h.hour);
     expect(hours).not.toContain(2);
+  });
+});
+
+describe('findHourIndexForInstant', () => {
+  const testDate = Temporal.PlainDate.from('2024-01-15');
+
+  it('should locate an instant inside its hour column', () => {
+    const hours = getTimelineHours('America/New_York', testDate);
+    // 9:30am New York on the test date
+    const instant = hours[9].add({ minutes: 30 }).toInstant();
+    expect(findHourIndexForInstant(hours, instant)).toBe(9);
+  });
+
+  it('should return null for instants outside the timeline', () => {
+    const hours = getTimelineHours('America/New_York', testDate);
+    const before = hours[0].subtract({ minutes: 1 }).toInstant();
+    const after = hours[23].add({ hours: 1 }).toInstant();
+    expect(findHourIndexForInstant(hours, before)).toBeNull();
+    expect(findHourIndexForInstant(hours, after)).toBeNull();
+  });
+
+  it('should treat column start as inclusive and column end as exclusive', () => {
+    const hours = getTimelineHours('America/New_York', testDate);
+    expect(findHourIndexForInstant(hours, hours[5].toInstant())).toBe(5);
+    expect(findHourIndexForInstant(hours, hours[6].toInstant())).toBe(6);
+  });
+
+  it('should disambiguate the repeated hour on DST fall-back days', () => {
+    // 2024-11-03: US fall DST; 1:00-2:00am occurs twice in New York.
+    // Column 1 is the first (EDT) 1am, column 2 is the second (EST) 1am.
+    const fallBackDate = Temporal.PlainDate.from('2024-11-03');
+    const hours = getTimelineHours('America/New_York', fallBackDate);
+    expect(hours[1].hour).toBe(1);
+    expect(hours[2].hour).toBe(1);
+
+    const firstOneAm = hours[1].add({ minutes: 30 }).toInstant();
+    const secondOneAm = hours[2].add({ minutes: 30 }).toInstant();
+    expect(findHourIndexForInstant(hours, firstOneAm)).toBe(1);
+    expect(findHourIndexForInstant(hours, secondOneAm)).toBe(2);
   });
 });

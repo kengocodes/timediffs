@@ -72,6 +72,22 @@ describe("commandResponseSchema", () => {
 
     expect(parsed.success).toBe(false);
   });
+
+  it("rejects reorder actions with an empty timezoneIds array", () => {
+    const parsed = commandResponseSchema.safeParse({
+      answerText: null,
+      actions: [
+        {
+          type: "reorder_timezones",
+          timezoneId: null,
+          timezoneIds: [],
+        },
+      ],
+      errorMessage: null,
+    });
+
+    expect(parsed.success).toBe(false);
+  });
 });
 
 describe("openRouterCommandResponseFormat", () => {

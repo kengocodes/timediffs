@@ -5,6 +5,7 @@ import {
   parseAsStringEnum,
 } from "nuqs";
 import { Temporal } from "@/lib/temporal";
+import { MAX_TIMEZONES } from "@/lib/timezone-constraints";
 
 /**
  * URL parsers for timezone comparison state.
@@ -12,26 +13,27 @@ import { Temporal } from "@/lib/temporal";
  */
 
 /**
- * Maximum number of timezones allowed to prevent DoS attacks and performance issues.
- * This limit protects against:
- * - Browser performance degradation
- * - Memory exhaustion
- * - UI rendering problems
- */
-const MAX_TIMEZONES = 8;
-
-/**
  * Parser for timezone IDs array.
  * Serializes as comma-separated string: "America/New_York,Europe/London"
- * Parses back to array, filtering out empty strings and enforcing maximum limit.
+ * Parses back to array, trimming whitespace, dropping empty strings and
+ * duplicates, and enforcing the maximum limit.
  */
 export const parseAsTimezoneArray = {
   parse: (value: string): string[] => {
     const baseParser = parseAsArrayOf(parseAsString).withDefault([]);
     const parsed = baseParser.parse(value);
+    // Dedupe so crafted/shared URLs like ?tz=X,X cannot produce duplicate
+    // React keys or duplicate dnd-kit sortable items downstream.
+    const unique: string[] = [];
+    const seen = new Set<string>();
+    for (const raw of parsed || []) {
+      const id = raw.trim();
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      unique.push(id);
+    }
     // Enforce maximum limit by truncating excess timezones
-    // Handle null case (shouldn't happen with withDefault, but TypeScript requires it)
-    return (parsed || []).slice(0, MAX_TIMEZONES);
+    return unique.slice(0, MAX_TIMEZONES);
   },
   serialize: (value: string[]): string => {
     const baseParser = parseAsArrayOf(parseAsString).withDefault([]);
@@ -46,7 +48,7 @@ export const parseAsTimezoneArray = {
   }),
 };
 
-// Export the constant for use in other modules
+// Re-export for existing client-side consumers
 export { MAX_TIMEZONES };
 
 /**

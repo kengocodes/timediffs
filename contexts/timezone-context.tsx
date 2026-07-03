@@ -42,11 +42,12 @@ interface TimezoneContextType {
   clearDetectedTimezone: () => void;
   /** Live clock, ticking every second. */
   currentTime: Temporal.Instant;
-  /** True when the selected date is today in the browser's timezone. */
+  /** True when the selected date is today in the home (reference) timezone. */
   isViewingToday: boolean;
   /**
    * The instant all displays are rendered for: the live clock when viewing
-   * today, otherwise local midnight of the selected date.
+   * today, otherwise midnight of the selected date in the home timezone
+   * (matching the timeline grid, which is anchored to the home timezone).
    */
   effectiveInstant: Temporal.Instant;
 }
@@ -87,8 +88,23 @@ function isValidTimezoneId(id: string): boolean {
   }
 }
 
+/** Filters a raw URL id list down to unique, known timezone IDs. */
+function sanitizeTimezoneIds(ids: string[] | null): string[] {
+  if (!ids) return [];
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const id of ids) {
+    if (seen.has(id) || !isValidTimezoneId(id)) continue;
+    seen.add(id);
+    result.push(id);
+  }
+  return result.slice(0, MAX_TIMEZONES);
+}
+
 export function TimezoneProvider({ children }: { children: React.ReactNode }) {
-  // Sync URL state with nuqs hooks
+  // The URL is the single source of truth for timezone selection, home
+  // timezone, date, and format. Back/forward navigation and shared links
+  // therefore always reflect in the UI without any state reconciliation.
   const [urlState, setUrlState] = useQueryStates({
     tz: parseAsTimezoneArray,
     date: parseAsPlainDate.withDefault(Temporal.Now.plainDateISO()),
@@ -96,8 +112,7 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
     home: parseAsHomeTimezone,
   });
 
-  // Track if we've initialized from URL to prevent overwriting user changes
-  const initializedFromUrlRef = useRef(false);
+  const defaultsAppliedRef = useRef(false);
   const [detectedTimezone, setDetectedTimezone] = useState<string | null>(null);
 
   // Detect browser timezone
@@ -110,33 +125,32 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Initialize timezones from URL or defaults
-  const [timezones, setTimezones] = useState<Timezone[]>([]);
+  // Timezone list derived from the URL (deduped and validated). The home
+  // timezone falls back to the first entry when the URL has no valid `home`.
+  const timezones = useMemo<Timezone[]>(() => {
+    const validIds = sanitizeTimezoneIds(urlState.tz);
+    if (validIds.length === 0) return [];
 
-  // Initialize from URL on mount (only once)
+    const homeId =
+      urlState.home && validIds.includes(urlState.home)
+        ? urlState.home
+        : validIds[0];
+
+    return validIds.map((id) => ({
+      ...createTimezoneFromId(id),
+      isHome: id === homeId,
+    }));
+  }, [urlState.tz, urlState.home]);
+
+  // Seed the URL with default timezones on first load when none are present
+  // (browser timezone + 4 others, or 5 backups). Uses history replace so no
+  // extra history entry is created.
   useEffect(() => {
-    if (initializedFromUrlRef.current) return;
+    if (defaultsAppliedRef.current) return;
+    defaultsAppliedRef.current = true;
 
-    // If URL has timezones, use them (validate first)
-    if (urlState.tz && urlState.tz.length > 0) {
-      const validIds = urlState.tz.filter(isValidTimezoneId);
-      if (validIds.length > 0) {
-        const initial = validIds.map((id) => createTimezoneFromId(id));
-        // Set home timezone if specified in URL
-        if (urlState.home && validIds.includes(urlState.home)) {
-          initial.forEach((tz) => {
-            tz.isHome = tz.id === urlState.home;
-          });
-        } else if (initial.length > 0) {
-          initial[0].isHome = true;
-        }
-        setTimezones(initial);
-        initializedFromUrlRef.current = true;
-        return;
-      }
-    }
+    if (sanitizeTimezoneIds(urlState.tz).length > 0) return;
 
-    // No URL timezones - set up defaults (browser timezone + 4 others, or 5 backups)
     const browserTz = getBrowserTimezone();
     let defaultIds: string[];
 
@@ -153,13 +167,8 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
       defaultIds = BACKUP_TIMEZONES;
     }
 
-    const initial = defaultIds.map((id) => createTimezoneFromId(id));
-    initial[0].isHome = true;
-    setTimezones(initial);
-
-    // Mark as initialized
-    initializedFromUrlRef.current = true;
-  }, [urlState.tz, urlState.home, getBrowserTimezone]);
+    void setUrlState({ tz: defaultIds }, { history: "replace" });
+  }, [urlState.tz, getBrowserTimezone, setUrlState]);
 
   // Live clock, updated every second for smooth real-time indicator movement
   const [currentTime, setCurrentTime] = useState(() => Temporal.Now.instant());
@@ -174,18 +183,27 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
 
   const selectedDate = urlState.date;
 
+  // The timeline grid is anchored to the home (reference) timezone, so
+  // "today" and the render instant must use that same timezone. Falls back
+  // to the browser timezone while the list is still empty.
+  const homeTimezoneId = useMemo(() => {
+    const home = timezones.find((tz) => tz.isHome) ?? timezones[0];
+    return home?.id ?? Temporal.Now.timeZoneId();
+  }, [timezones]);
+
   // Derived from the ticking clock so the flag flips at midnight
   const isViewingToday = selectedDate.equals(
-    currentTime.toZonedDateTimeISO(Temporal.Now.timeZoneId()).toPlainDate()
+    currentTime.toZonedDateTimeISO(homeTimezoneId).toPlainDate()
   );
 
   const effectiveInstant = useMemo(() => {
     if (isViewingToday) {
       return currentTime;
     }
-    // Local midnight of the selected date in the browser's timezone
-    return selectedDate.toZonedDateTime(Temporal.Now.timeZoneId()).toInstant();
-  }, [isViewingToday, currentTime, selectedDate]);
+    // Midnight of the selected date in the home timezone, matching the
+    // anchor used by getTimelineHours for the timeline grid.
+    return selectedDate.toZonedDateTime(homeTimezoneId).toInstant();
+  }, [isViewingToday, currentTime, selectedDate, homeTimezoneId]);
 
   // Use format from URL or default to 12h
   const timeFormat = useMemo(() => {
@@ -201,92 +219,82 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
     [timezones, effectiveInstant, timeFormat]
   );
 
-  // Sync timezones to URL when they change (but not during initial URL load)
-  useEffect(() => {
-    // Don't sync if we haven't initialized from URL yet
-    if (!initializedFromUrlRef.current) return;
+  const addTimezone = useCallback(
+    (timezoneId: string) => {
+      // Validate timezone ID
+      if (!isValidTimezoneId(timezoneId)) {
+        console.warn(`Invalid timezone ID: ${timezoneId}`);
+        return;
+      }
 
-    const timezoneIds = timezones.map((tz) => tz.id);
-    const homeId = timezones.find((tz) => tz.isHome)?.id || null;
-
-    // Only update URL if different from current state
-    const tzChanged =
-      JSON.stringify(timezoneIds) !== JSON.stringify(urlState.tz);
-    const homeChanged = homeId !== urlState.home;
-
-    if (tzChanged || homeChanged) {
-      setUrlState({
-        tz: timezoneIds,
-        home: homeId,
+      void setUrlState((old) => {
+        const current = sanitizeTimezoneIds(old.tz);
+        if (current.includes(timezoneId)) {
+          return {};
+        }
+        // Enforce maximum limit to prevent DoS and performance issues
+        if (current.length >= MAX_TIMEZONES) {
+          console.warn(
+            `Maximum timezone limit (${MAX_TIMEZONES}) reached. Cannot add more timezones.`
+          );
+          return {};
+        }
+        return { tz: [...current, timezoneId] };
       });
-    }
-  }, [timezones, urlState.tz, urlState.home, setUrlState]);
+    },
+    [setUrlState]
+  );
 
-  const addTimezone = useCallback((timezoneId: string) => {
-    // Validate timezone ID
-    if (!isValidTimezoneId(timezoneId)) {
-      console.warn(`Invalid timezone ID: ${timezoneId}`);
-      return;
-    }
+  const removeTimezone = useCallback(
+    (timezoneId: string) => {
+      void setUrlState((old) => {
+        const current = sanitizeTimezoneIds(old.tz);
+        if (!current.includes(timezoneId)) {
+          return {};
+        }
+        const remaining = current.filter((id) => id !== timezoneId);
+        // If the removed timezone was home, fall back to the first remaining
+        const nextHome =
+          old.home === timezoneId ? remaining[0] ?? null : old.home;
+        return { tz: remaining, home: nextHome };
+      });
+    },
+    [setUrlState]
+  );
 
-    setTimezones((prev) => {
-      // Check if timezone already exists
-      if (prev.some((tz) => tz.id === timezoneId)) {
-        return prev;
-      }
+  const setHomeTimezone = useCallback(
+    (timezoneId: string) => {
+      void setUrlState((old) => {
+        const current = sanitizeTimezoneIds(old.tz);
+        if (!current.includes(timezoneId)) {
+          return {};
+        }
+        return { home: timezoneId };
+      });
+    },
+    [setUrlState]
+  );
 
-      // Enforce maximum limit to prevent DoS and performance issues
-      if (prev.length >= MAX_TIMEZONES) {
-        console.warn(
-          `Maximum timezone limit (${MAX_TIMEZONES}) reached. Cannot add more timezones.`
-        );
-        return prev;
-      }
-
-      const newTimezone = createTimezoneFromId(timezoneId);
-      return [...prev, newTimezone];
-    });
-  }, []);
-
-  const removeTimezone = useCallback((timezoneId: string) => {
-    setTimezones((prev) => {
-      const filtered = prev.filter((tz) => tz.id !== timezoneId);
-      // If removed timezone was home, set first remaining as home
-      const wasHome = prev.find((tz) => tz.id === timezoneId)?.isHome;
-      if (wasHome && filtered.length > 0) {
-        filtered[0].isHome = true;
-      }
-      return filtered;
-    });
-  }, []);
-
-  const setHomeTimezone = useCallback((timezoneId: string) => {
-    setTimezones((prev) =>
-      prev.map((tz) => ({
-        ...tz,
-        isHome: tz.id === timezoneId,
-      }))
-    );
-  }, []);
-
-  const reorderTimezones = useCallback((newOrderIds: string[]) => {
-    setTimezones((prev) => {
-      if (newOrderIds.length !== prev.length) return prev;
-      const idToTz = new Map(prev.map((tz) => [tz.id, tz]));
-      const next: Timezone[] = [];
-      for (const id of newOrderIds) {
-        const tz = idToTz.get(id);
-        if (!tz) return prev;
-        next.push(tz);
-      }
-      return next;
-    });
-  }, []);
+  const reorderTimezones = useCallback(
+    (newOrderIds: string[]) => {
+      void setUrlState((old) => {
+        const current = sanitizeTimezoneIds(old.tz);
+        // The new order must be a permutation of the current list:
+        // same length, no duplicates, and every id currently displayed.
+        if (newOrderIds.length !== current.length) return {};
+        const uniqueIds = new Set(newOrderIds);
+        if (uniqueIds.size !== newOrderIds.length) return {};
+        if (!newOrderIds.every((id) => current.includes(id))) return {};
+        return { tz: newOrderIds };
+      });
+    },
+    [setUrlState]
+  );
 
   const handleSetSelectedDate = useCallback(
     (date: Temporal.PlainDate) => {
       // Update URL state, which will trigger selectedDate update
-      setUrlState({ date });
+      void setUrlState({ date });
     },
     [setUrlState]
   );
@@ -294,7 +302,7 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
   const handleSetTimeFormat = useCallback(
     (format: TimeFormat) => {
       // Update URL state, which will trigger timeFormat update
-      setUrlState({ format });
+      void setUrlState({ format });
     },
     [setUrlState]
   );

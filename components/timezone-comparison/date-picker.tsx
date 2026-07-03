@@ -41,6 +41,15 @@ export function DatePicker() {
     setOpen(false);
   };
 
+  // Open on the month of the current selection, which may have changed
+  // externally (week view, URL navigation) since the last open.
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      setCurrentMonth(selectedDate.toPlainYearMonth());
+    }
+    setOpen(nextOpen);
+  };
+
   const handlePreviousMonth = () => {
     setCurrentMonth(currentMonth.subtract({ months: 1 }));
   };
@@ -120,14 +129,14 @@ export function DatePicker() {
 
       {/* Calendar Grid */}
       <div className={cn("grid grid-cols-7", isMobile ? "gap-2" : "gap-1")}>
-        {calendarDays.map((day, index) => {
+        {calendarDays.map((day) => {
           const isCurrentMonth = day.toPlainYearMonth().equals(currentMonth);
           const isSelected = day.equals(selectedDate);
           const isToday = day.equals(today);
 
           return (
             <button
-              key={index}
+              key={day.toString()}
               onClick={() => handleDateSelect(day)}
               className={cn(
                 "flex items-center justify-center rounded-md transition-colors cursor-pointer",
@@ -171,7 +180,7 @@ export function DatePicker() {
   // Use Drawer on mobile, Popover on desktop
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={setOpen}>
+      <Drawer open={open} onOpenChange={handleOpenChange}>
         <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
         <DrawerContent className="p-0" open={open}>
           {calendarContent}
@@ -181,7 +190,7 @@ export function DatePicker() {
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
       <PopoverContent
         className="w-auto p-0 bg-white dark:bg-stone-900 border border-slate-200 dark:border-stone-700 shadow-sm"

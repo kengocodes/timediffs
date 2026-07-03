@@ -74,11 +74,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(THEME_STORAGE_KEY, newTheme);
   }, [theme]);
 
-  // Prevent flash of incorrect theme
-  if (!mounted) {
-    return null;
-  }
-
+  // Children render immediately (including on the server) so the app is
+  // never blanked while waiting for hydration. The inline script in
+  // app/layout.tsx applies the persisted theme class before first paint,
+  // and the effects above take over once mounted.
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef } from "react";
 import { X, Home, GripVertical, GripHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Temporal } from "@/lib/temporal";
@@ -45,7 +45,7 @@ export function TimezoneRow({
   referenceTimezoneId,
 }: TimezoneRowProps) {
   const isMobile = useIsMobile();
-  const { currentTime, isViewingToday } = useTimezone();
+  const { isViewingToday } = useTimezone();
   const infoRef = useRef<HTMLDivElement | null>(null);
   const fullLocationLabel = display.timezone.country
     ? holidayName
@@ -61,27 +61,11 @@ export function TimezoneRow({
     isMobile && !isDragging
   );
 
-  // Calculate which hour is current for this timezone row
-  // Only highlight if viewing today and we have a reference timezone
-  const currentHourIndexForRow = useMemo(() => {
-    if (!isViewingToday || currentHourIndex === null || !referenceTimezoneId) {
-      return null;
-    }
-
-    // Find the hour index matching the current wall-clock hour in the reference timezone
-    const refNow = currentTime.toZonedDateTimeISO(referenceTimezoneId);
-    const index = referenceHours.findIndex(
-      (hour) => hour.hour === refNow.hour && hour.day === refNow.day
-    );
-
-    return index >= 0 ? index : null;
-  }, [
-    isViewingToday,
-    currentHourIndex,
-    referenceTimezoneId,
-    currentTime,
-    referenceHours,
-  ]);
+  // The current hour column is shared by all rows (the timeline is anchored
+  // to the reference timezone), so use the index computed by the parent.
+  // Only highlight when viewing today with a known reference timezone.
+  const currentHourIndexForRow =
+    isViewingToday && referenceTimezoneId ? currentHourIndex : null;
   return (
     <div>
       <div

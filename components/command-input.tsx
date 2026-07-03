@@ -162,11 +162,21 @@ export function CommandInput({ className }: CommandInputProps) {
           failures.push("Missing timezone ID for home timezone action.");
           continue;
         }
+        // Auto-add the timezone when it isn't displayed yet, so commands
+        // like "Set home to UTC" work without a separate add step.
         if (!activeTimezoneIds.has(timezoneId)) {
-          failures.push(
-            `Cannot set home timezone. ${timezoneId} is not in the list.`,
-          );
-          continue;
+          if (!validTimezoneIds.has(timezoneId)) {
+            failures.push(`Unknown timezone: ${action.timezoneId}.`);
+            continue;
+          }
+          if (activeTimezoneIds.size >= MAX_TIMEZONES) {
+            failures.push(
+              `Cannot set home timezone. Maximum of ${MAX_TIMEZONES} timezones reached.`,
+            );
+            continue;
+          }
+          addTimezone(timezoneId);
+          activeTimezoneIds.add(timezoneId);
         }
         setHomeTimezone(timezoneId);
         appliedCount += 1;
@@ -185,6 +195,14 @@ export function CommandInput({ className }: CommandInputProps) {
         if (normalizedIds.length !== activeTimezoneIds.size) {
           failures.push(
             "Reorder action must include all currently displayed timezones.",
+          );
+          continue;
+        }
+        // Duplicate ids would pass the length check while omitting another
+        // timezone, which would silently drop it from the list.
+        if (new Set(normalizedIds).size !== normalizedIds.length) {
+          failures.push(
+            "Reorder action must list each timezone exactly once.",
           );
           continue;
         }
@@ -236,6 +254,9 @@ export function CommandInput({ className }: CommandInputProps) {
       const payload = (await response.json()) as CommandResponse;
 
       if (!response.ok) {
+        // Clear any previous answer so it can't be mistaken for a response
+        // to the failed command.
+        setAnswerText(null);
         setError(payload.errorMessage || "Command failed.");
         return;
       }

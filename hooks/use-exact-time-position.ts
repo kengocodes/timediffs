@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Temporal } from "@/lib/temporal";
+import { findHourIndexForInstant } from "@/lib/timezone";
 
 interface UseExactTimePositionParams {
   referenceTimezone: { timezone: { id: string } } | undefined;
@@ -34,15 +35,11 @@ export function useExactTimePosition({
       };
     }
 
-    // Current wall-clock time in the reference timezone
-    const refNow = now.toZonedDateTimeISO(referenceTimezone.timezone.id);
+    // Match by instant rather than wall-clock hour so DST fall-back days
+    // (with two columns sharing the same wall-clock hour) resolve correctly.
+    const currentHourIndex = findHourIndexForInstant(referenceHours, now);
 
-    // Find which hour block contains the current time
-    const currentHourIndex = referenceHours.findIndex(
-      (hour) => hour.hour === refNow.hour && hour.day === refNow.day
-    );
-
-    if (currentHourIndex === -1) {
+    if (currentHourIndex === null) {
       return {
         columnIndex: null,
         offsetPercentage: 0,
@@ -50,10 +47,14 @@ export function useExactTimePosition({
       };
     }
 
-    // Calculate the offset percentage within the hour column
-    // Minutes (0-59) + seconds (0-59) / 60 = total fraction of hour
-    const totalMinutes = refNow.minute + refNow.second / 60;
-    const offsetPercentage = (totalMinutes / 60) * 100;
+    // Offset within the hour column as elapsed fraction of that column's
+    // real duration (an hour, except at DST boundaries).
+    const columnStartMs = referenceHours[currentHourIndex].epochMilliseconds;
+    const elapsedMs = now.epochMilliseconds - columnStartMs;
+    const offsetPercentage = Math.min(
+      100,
+      Math.max(0, (elapsedMs / 3_600_000) * 100)
+    );
 
     return {
       columnIndex: currentHourIndex,

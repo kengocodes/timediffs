@@ -218,3 +218,24 @@ export function getTimelineHours(
   const midnight = date.toZonedDateTime(timezoneId);
   return Array.from({ length: 24 }, (_, i) => midnight.add({ hours: i }));
 }
+
+/**
+ * Finds the index of the timeline hour column containing the given instant,
+ * or null when the instant falls outside the timeline. Compares instants
+ * rather than wall-clock hour/day so DST fall-back days (where two columns
+ * share the same wall-clock hour) resolve to the correct column.
+ */
+export function findHourIndexForInstant(
+  referenceHours: Temporal.ZonedDateTime[],
+  instant: Temporal.Instant
+): number | null {
+  const epoch = instant.epochMilliseconds;
+  for (let i = 0; i < referenceHours.length; i++) {
+    const start = referenceHours[i].epochMilliseconds;
+    const end = referenceHours[i].add({ hours: 1 }).epochMilliseconds;
+    if (epoch >= start && epoch < end) {
+      return i;
+    }
+  }
+  return null;
+}
