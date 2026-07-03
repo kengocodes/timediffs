@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Temporal } from "@/lib/temporal";
 import type { TimezoneDisplay } from "@/types";
 import { TimezoneRow } from "./timezone-row";

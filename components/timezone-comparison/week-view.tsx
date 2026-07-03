@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { Temporal } from "@/lib/temporal";
 import { startOfWeekSunday, eachDayInRange } from "@/lib/calendar";
 import { useTimezone } from "@/contexts/timezone-context";
@@ -15,13 +14,11 @@ export function WeekView() {
   const { selectedDate, setSelectedDate } = useTimezone();
 
   const today = Temporal.Now.plainDateISO();
-  const todayKey = today.toString();
 
-  // Get the current week (this week) - always shows the week containing today
-  const weekDays = useMemo(() => {
-    const weekStart = startOfWeekSunday(Temporal.PlainDate.from(todayKey));
-    return eachDayInRange(weekStart, weekStart.add({ days: 6 }));
-  }, [todayKey]);
+  // Current week (Sunday-Saturday) containing today; cheap enough to
+  // recompute per render, so no manual memoization
+  const weekStart = startOfWeekSunday(today);
+  const weekDays = eachDayInRange(weekStart, weekStart.add({ days: 6 }));
 
   return (
     <div className="flex items-center gap-1 lg:gap-1 overflow-x-auto pb-1 -mx-1 px-1 lg:mx-0 lg:px-0 scrollbar-hide shrink-0">

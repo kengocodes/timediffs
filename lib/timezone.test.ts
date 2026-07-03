@@ -48,22 +48,6 @@ describe('createTimezoneFromId', () => {
     expect(result).toHaveProperty('city');
     expect(result).toHaveProperty('country');
     expect(result).toHaveProperty('countryCode');
-    expect(result).toHaveProperty('offset');
-    expect(result).toHaveProperty('offsetHours');
-    expect(typeof result.offsetHours).toBe('number');
-  });
-
-  it('should calculate correct offset hours', () => {
-    const result = createTimezoneFromId('America/New_York');
-    // EST is UTC-5, EDT is UTC-4 (depending on DST)
-    expect(result.offsetHours).toBeGreaterThanOrEqual(-5);
-    expect(result.offsetHours).toBeLessThanOrEqual(-4);
-  });
-
-  it('should handle UTC timezone', () => {
-    const result = createTimezoneFromId('UTC');
-    expect(result.id).toBe('UTC');
-    expect(result.offsetHours).toBe(0);
   });
 
   it('should handle European timezone', () => {
@@ -75,13 +59,13 @@ describe('createTimezoneFromId', () => {
   it('should handle Asian timezone', () => {
     const result = createTimezoneFromId('Asia/Tokyo');
     expect(result.city).toBeTruthy();
-    expect(result.offsetHours).toBe(9); // JST is UTC+9
+    expect(result.country).toBeTruthy();
   });
 
-  it('should include offset in correct format', () => {
-    const result = createTimezoneFromId('America/New_York');
-    // Offset should be either a short code (EST/EDT) or UTC±N format
-    expect(result.offset).toMatch(/^(EST|EDT|UTC[+-]\d+|[A-Z]{2,4})$/);
+  it('should fall back for unknown IANA IDs', () => {
+    const result = createTimezoneFromId('Invalid/Somewhere');
+    expect(result.id).toBe('Invalid/Somewhere');
+    expect(result.countryCode).toBe('XX');
   });
 });
 
@@ -159,6 +143,8 @@ describe('formatDateDisplay', () => {
 });
 
 describe('getOffsetDisplay', () => {
+  const instant = Temporal.Instant.from('2024-01-15T12:00:00Z');
+
   it('should return offset display string', () => {
     const timezone = createTimezoneFromId('America/New_York');
     const result = getOffsetDisplay(timezone);
@@ -170,15 +156,30 @@ describe('getOffsetDisplay', () => {
     const timezone = createTimezoneFromId('America/New_York');
     const result = getOffsetDisplay(timezone);
     // Should be either EST/EDT or ±N format
-    expect(result).toMatch(/^(EST|EDT|[+-]\d+|[A-Z]{2,4})$/);
+    expect(result).toMatch(/^(EST|EDT|[+-]\d+(:\d{2})?|[A-Z]{2,4})$/);
   });
 
   it('should reflect DST in offset for different dates', () => {
     const timezone = createTimezoneFromId('America/New_York');
-    const winterInstant = Temporal.Instant.from('2024-01-15T12:00:00Z');
     const summerInstant = Temporal.Instant.from('2024-07-15T12:00:00Z');
-    expect(getOffsetDisplay(timezone, winterInstant)).toBe('EST');
+    expect(getOffsetDisplay(timezone, instant)).toBe('EST');
     expect(getOffsetDisplay(timezone, summerInstant)).toBe('EDT');
+  });
+
+  it('should show whole-hour offsets without minutes', () => {
+    const tokyo = createTimezoneFromId('Asia/Tokyo');
+    expect(getOffsetDisplay(tokyo, instant)).toBe('+9');
+  });
+
+  it('should preserve minutes for half- and quarter-hour offsets', () => {
+    // These zones have no alphabetic abbreviation, so the numeric offset
+    // shows; it must not round +5:30 up to +6
+    const kolkata = createTimezoneFromId('Asia/Kolkata');
+    const kathmandu = createTimezoneFromId('Asia/Kathmandu');
+    const adelaide = createTimezoneFromId('Australia/Adelaide');
+    expect(getOffsetDisplay(kolkata, instant)).toBe('+5:30');
+    expect(getOffsetDisplay(kathmandu, instant)).toBe('+5:45');
+    expect(getOffsetDisplay(adelaide, instant)).toBe('+10:30'); // ACDT in January
   });
 });
 

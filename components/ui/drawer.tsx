@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { motion, AnimatePresence, type Transition } from "framer-motion"
+import { motion, AnimatePresence, type Transition } from "motion/react"
 
 import { cn } from "@/lib/utils"
 

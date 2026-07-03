@@ -39,17 +39,23 @@ export function parseTimezoneId(timezoneId: string): {
   };
 }
 
-const NANOSECONDS_PER_HOUR = 3_600_000_000_000;
+// Intl.DateTimeFormat construction is expensive (it loads locale data), and
+// the offset display recomputes on every clock tick, so cache per timezone.
+const shortZoneNameFormatters = new Map<string, Intl.DateTimeFormat>();
 
 /**
  * Returns the short localized zone name (e.g., "EST") for a timezone at a
  * given instant, or an empty string if unavailable.
  */
 function getShortZoneName(timezoneId: string, instant: Temporal.Instant): string {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezoneId,
-    timeZoneName: "short",
-  });
+  let formatter = shortZoneNameFormatters.get(timezoneId);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezoneId,
+      timeZoneName: "short",
+    });
+    shortZoneNameFormatters.set(timezoneId, formatter);
+  }
 
   const parts = formatter.formatToParts(instant.epochMilliseconds);
   return parts.find((part) => part.type === "timeZoneName")?.value || "";
@@ -61,20 +67,25 @@ function isShortZoneAbbreviation(zoneName: string): boolean {
 }
 
 /**
- * Creates a Timezone object from an IANA timezone ID.
- * Uses @vvo/tzdb for accurate country and city information,
- * and Temporal for current offset calculations (DST-aware).
+ * Compacts a Temporal offset string ("+09:00", "+05:30") to display form:
+ * "+9" for whole hours, "+5:30" when minutes matter (e.g. India, Nepal).
+ */
+function formatCompactOffset(offset: string): string {
+  const sign = offset.startsWith("-") ? "-" : "+";
+  const [hours = "0", minutes = "00"] = offset.slice(1).split(":");
+  const wholeHours = String(Number(hours));
+  return minutes === "00"
+    ? `${sign}${wholeHours}`
+    : `${sign}${wholeHours}:${minutes}`;
+}
+
+/**
+ * Creates a Timezone object from an IANA timezone ID,
+ * using @vvo/tzdb for accurate country and city information.
  */
 export function createTimezoneFromId(timezoneId: TimezoneId): Timezone {
   const timezoneMap = getTimezoneMap();
   const tzData = timezoneMap.get(timezoneId);
-  const now = Temporal.Now.zonedDateTimeISO(timezoneId);
-
-  const timeZoneName = getShortZoneName(timezoneId, now.toInstant());
-  const offsetHours = Math.round(now.offsetNanoseconds / NANOSECONDS_PER_HOUR);
-  const offsetDisplay = isShortZoneAbbreviation(timeZoneName)
-    ? timeZoneName
-    : `UTC${offsetHours >= 0 ? "+" : ""}${offsetHours}`;
 
   if (tzData) {
     return {
@@ -82,8 +93,6 @@ export function createTimezoneFromId(timezoneId: TimezoneId): Timezone {
       city: tzData.mainCities?.[0] || tzData.alternativeName || timezoneId,
       country: tzData.countryName || "",
       countryCode: tzData.countryCode || "",
-      offset: offsetDisplay,
-      offsetHours,
     };
   }
 
@@ -96,8 +105,6 @@ export function createTimezoneFromId(timezoneId: TimezoneId): Timezone {
     city: displayName,
     country: region,
     countryCode: "XX",
-    offset: offsetDisplay,
-    offsetHours,
   };
 }
 
@@ -172,11 +179,7 @@ export function getOffsetDisplay(
     return timeZoneName;
   }
 
-  const offsetHours = Math.round(
-    instant.toZonedDateTimeISO(timezone.id).offsetNanoseconds /
-      NANOSECONDS_PER_HOUR
-  );
-  return `${offsetHours >= 0 ? "+" : ""}${offsetHours}`;
+  return formatCompactOffset(instant.toZonedDateTimeISO(timezone.id).offset);
 }
 
 export function createTimezoneDisplay(

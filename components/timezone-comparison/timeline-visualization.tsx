@@ -9,7 +9,7 @@ import { useCenterColumn } from "@/hooks/use-center-column";
 import { ColumnHighlightRing } from "./column-highlight-ring";
 import { ExactTimeIndicator } from "./exact-time-indicator";
 import { useState, useMemo, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import {
   DndContext,
   DragOverlay,
@@ -96,9 +96,14 @@ export function TimelineVisualization({
   const referenceTimezone = hasTimezones
     ? timezoneDisplays.find((d) => d.timezone.isHome) || timezoneDisplays[0]
     : null;
-  const referenceHours = referenceTimezone
-    ? getTimelineHours(referenceTimezone.timezone.id, selectedDate)
-    : [];
+  const referenceTimezoneId = referenceTimezone?.timezone.id;
+  const referenceHours = useMemo(
+    () =>
+      referenceTimezoneId
+        ? getTimelineHours(referenceTimezoneId, selectedDate)
+        : [],
+    [referenceTimezoneId, selectedDate]
+  );
 
   // Track mouse hover position - always call with a valid number
   const {

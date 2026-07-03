@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, type Transition } from "framer-motion";
+import { motion, type Transition } from "motion/react";
 import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 

@@ -165,9 +165,6 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
   const [currentTime, setCurrentTime] = useState(() => Temporal.Now.instant());
 
   useEffect(() => {
-    // Update immediately on mount
-    setCurrentTime(Temporal.Now.instant());
-
     const interval = setInterval(() => {
       setCurrentTime(Temporal.Now.instant());
     }, 1000);
@@ -177,10 +174,9 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
 
   const selectedDate = urlState.date;
 
-  const isViewingToday = useMemo(
-    () => selectedDate.equals(Temporal.Now.plainDateISO()),
-    // Recheck on every clock tick so the flag flips at midnight
-    [selectedDate, currentTime]
+  // Derived from the ticking clock so the flag flips at midnight
+  const isViewingToday = selectedDate.equals(
+    currentTime.toZonedDateTimeISO(Temporal.Now.timeZoneId()).toPlainDate()
   );
 
   const effectiveInstant = useMemo(() => {
@@ -196,8 +192,13 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
     return urlState.format || "12h";
   }, [urlState.format]);
 
-  const [timezoneDisplays, setTimezoneDisplays] = useState<TimezoneDisplay[]>(
-    []
+  // Fully derived from timezones + instant + format, so no state/effect needed
+  const timezoneDisplays = useMemo<TimezoneDisplay[]>(
+    () =>
+      timezones.map((tz) =>
+        createTimezoneDisplay(tz, effectiveInstant, timeFormat)
+      ),
+    [timezones, effectiveInstant, timeFormat]
   );
 
   // Sync timezones to URL when they change (but not during initial URL load)
@@ -220,17 +221,6 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
       });
     }
   }, [timezones, urlState.tz, urlState.home, setUrlState]);
-
-  const updateDisplays = useCallback(() => {
-    const displays = timezones.map((tz) =>
-      createTimezoneDisplay(tz, effectiveInstant, timeFormat)
-    );
-    setTimezoneDisplays(displays);
-  }, [timezones, effectiveInstant, timeFormat]);
-
-  useEffect(() => {
-    updateDisplays();
-  }, [updateDisplays]);
 
   const addTimezone = useCallback((timezoneId: string) => {
     // Validate timezone ID

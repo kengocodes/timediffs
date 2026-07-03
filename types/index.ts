@@ -5,8 +5,6 @@ export interface Timezone {
   city: string;
   country: string;
   countryCode: string;
-  offset: string;
-  offsetHours: number;
   isHome?: boolean;
 }
 
