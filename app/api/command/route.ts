@@ -82,11 +82,12 @@ function parseContent(content: unknown): unknown {
 }
 
 function getRequestValidationMessage(
-  issues: { path: (string | number)[]; code: string }[],
+  issues: { path: PropertyKey[]; code: string }[],
 ) {
   const queryTooLong = issues.some(
     (issue) =>
       issue.path.length === 1 &&
+      typeof issue.path[0] === "string" &&
       issue.path[0] === "query" &&
       issue.code === "too_big",
   );
