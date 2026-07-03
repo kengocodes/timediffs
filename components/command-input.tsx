@@ -328,7 +328,7 @@ export function CommandInput({ className }: CommandInputProps) {
               "text-slate-900 dark:text-stone-100 font-normal caret-slate-900 dark:caret-stone-100",
               "focus:caret-slate-900 dark:focus:caret-stone-100",
               isMobile
-                ? "min-h-10 flex-1 px-0 text-sm touch-manipulation"
+                ? "min-h-10 flex-1 px-0 text-base touch-manipulation"
                 : "px-4 py-3 pr-12 text-sm",
             )}
             aria-label="Command input for timezone queries"
