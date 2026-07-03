@@ -23,6 +23,15 @@ describe("commandRequestSchema", () => {
 
     expect(parsed.success).toBe(false);
   });
+
+  it("rejects oversized timezone id entries", () => {
+    const parsed = commandRequestSchema.safeParse({
+      query: "what time is it",
+      currentTimezoneIds: ["x".repeat(65)],
+    });
+
+    expect(parsed.success).toBe(false);
+  });
 });
 
 describe("commandResponseSchema", () => {

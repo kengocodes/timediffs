@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { COMMAND_QUERY_MAX_CHARS } from "@/lib/command-constraints";
 import {
   COMMAND_ACTIONS_MAX,
   COMMAND_ANSWER_MAX_CHARS,
   COMMAND_ERROR_MAX_CHARS,
+  COMMAND_QUERY_MAX_CHARS,
+  COMMAND_TIMEZONE_ID_MAX_CHARS,
 } from "@/lib/command-constraints";
 import { MAX_TIMEZONES } from "@/lib/timezone-constraints";
 
@@ -51,7 +52,9 @@ export const commandResponseSchema = z.object({
 
 export const commandRequestSchema = z.object({
   query: z.string().min(1).max(COMMAND_QUERY_MAX_CHARS),
-  currentTimezoneIds: z.array(z.string().min(1)).max(MAX_TIMEZONES),
+  currentTimezoneIds: z
+    .array(z.string().min(1).max(COMMAND_TIMEZONE_ID_MAX_CHARS))
+    .max(MAX_TIMEZONES),
 });
 
 export type CommandAction = z.infer<typeof commandActionSchema>;
