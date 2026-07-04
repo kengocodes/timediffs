@@ -1,6 +1,6 @@
 /** Bulk requests ("add zones for our NY, London, Singapore and Sydney offices") need more room than single commands. */
 export const COMMAND_QUERY_MAX_CHARS = 200;
-export const COMMAND_ANSWER_MAX_CHARS = 280;
+export const COMMAND_ANSWER_MAX_CHARS = 600;
 export const COMMAND_ERROR_MAX_CHARS = 160;
 export const COMMAND_ACTIONS_MAX = 8;
 
@@ -21,8 +21,8 @@ export const COMMAND_LLM_TIMEOUT_MS = 15_000;
 /** Server timeout plus buffer for network overhead. */
 export const COMMAND_CLIENT_TIMEOUT_MS = 20_000;
 /**
- * Enough for a 280-char answer plus JSON scaffolding and a full set of bulk
+ * Enough for a 600-char answer plus JSON scaffolding and a full set of bulk
  * actions (e.g. replace_all with 8 timezone IDs). Truncated JSON fails schema
  * parsing, so this errs generous.
  */
-export const COMMAND_LLM_MAX_TOKENS = 700;
+export const COMMAND_LLM_MAX_TOKENS = 1000;
