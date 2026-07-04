@@ -35,15 +35,15 @@ const DrawerContent = React.forwardRef<
   DrawerContentProps
 >(({ className, children, open, ...props }, ref) => {
   const [drawerHeight, setDrawerHeight] = React.useState<number | undefined>(undefined)
+  const [prevOpen, setPrevOpen] = React.useState(open)
 
   // Capture initial viewport height when drawer opens to prevent resize from keyboard
-  React.useEffect(() => {
-    if (open) {
-      // Use 85% of the initial viewport height, but cap at reasonable max
-      const initialHeight = Math.min(window.innerHeight * 0.85, 600)
-      setDrawerHeight(initialHeight)
+  if (open !== prevOpen) {
+    setPrevOpen(open)
+    if (open && typeof window !== "undefined") {
+      setDrawerHeight(Math.min(window.innerHeight * 0.85, 600))
     }
-  }, [open])
+  }
 
   return (
     <DialogPrimitive.Portal>
@@ -69,8 +69,8 @@ const DrawerContent = React.forwardRef<
               ref={ref}
               asChild
               forceMount
-              key="drawer-content"
               {...props}
+              key="drawer-content"
             >
               <motion.div
                 className={cn(

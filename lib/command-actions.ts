@@ -136,9 +136,10 @@ export function executeCommandActions({
   /** Replaces the displayed list with targetIds (order included). */
   const applyReplaceAll = (rawIds: (string | null)[]) => {
     const targetIds: string[] = [];
+    const seenIds = new Set<string>();
     for (const rawId of rawIds) {
       const timezoneId = normalizeTimezoneId(rawId);
-      if (!timezoneId || targetIds.includes(timezoneId)) {
+      if (!timezoneId || seenIds.has(timezoneId)) {
         continue;
       }
       if (!validTimezoneIds.has(timezoneId)) {
@@ -149,6 +150,7 @@ export function executeCommandActions({
         failures.push(`Maximum of ${maxTimezones} timezones reached.`);
         break;
       }
+      seenIds.add(timezoneId);
       targetIds.push(timezoneId);
     }
 

@@ -15,6 +15,8 @@ import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
 
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 /**
  * Date picker component that displays a calendar for selecting dates.
  * Matches the UI/UX style of the TimezonePicker component.
@@ -32,9 +34,6 @@ export function DatePicker() {
     () => calendarGridDays(currentMonth),
     [currentMonth]
   );
-
-  // Day names (Sunday to Saturday)
-  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const handleDateSelect = (date: Temporal.PlainDate) => {
     setSelectedDate(date);
@@ -78,6 +77,7 @@ export function DatePicker() {
         )}
       >
         <button
+          type="button"
           onClick={handlePreviousMonth}
           className={cn(
             "p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-stone-700 transition-colors text-slate-600 dark:text-stone-400 hover:text-slate-900 dark:hover:text-stone-100 cursor-pointer",
@@ -96,6 +96,7 @@ export function DatePicker() {
           {monthYearLabel}
         </h3>
         <button
+          type="button"
           onClick={handleNextMonth}
           className={cn(
             "p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-stone-700 transition-colors text-slate-600 dark:text-stone-400 hover:text-slate-900 dark:hover:text-stone-100 cursor-pointer",
@@ -114,7 +115,7 @@ export function DatePicker() {
           isMobile ? "gap-2 mb-2" : "gap-1"
         )}
       >
-        {dayNames.map((day) => (
+        {DAY_NAMES.map((day) => (
           <div
             key={day}
             className={cn(
@@ -136,6 +137,7 @@ export function DatePicker() {
 
           return (
             <button
+              type="button"
               key={day.toString()}
               onClick={() => handleDateSelect(day)}
               className={cn(

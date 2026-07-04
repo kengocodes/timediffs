@@ -73,7 +73,7 @@ export function ColumnHighlightRing({
       window.removeEventListener("resize", measureContainer);
       clearTimeout(timeoutId);
     };
-  }, [columnIndex, totalColumns]);
+  }, [isMobile]);
 
   // Hide on mobile screens
   if (isMobile || columnIndex === null || totalColumns === 0 || !measurements) {

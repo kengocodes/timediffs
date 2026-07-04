@@ -166,9 +166,6 @@ export function useHolidays(
     };
 
     if (lookupData.items.length === 0) {
-      setHolidayNamesByTimezone((previous) =>
-        Object.keys(previous).length === 0 ? previous : {}
-      );
       return;
     }
 
@@ -179,5 +176,5 @@ export function useHolidays(
     };
   }, [lookupData]);
 
-  return holidayNamesByTimezone;
+  return lookupData.items.length === 0 ? {} : holidayNamesByTimezone;
 }

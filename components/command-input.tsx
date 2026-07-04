@@ -377,6 +377,7 @@ export function CommandInput({ className }: CommandInputProps) {
             />
           )}
           <button
+            type="button"
             onClick={handleButtonClick}
             disabled={!isProcessing && (!input.trim() || cooldownSeconds > 0)}
             className={cn(

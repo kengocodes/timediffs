@@ -62,6 +62,7 @@ export function ThemeToggle() {
             const isActive = theme === themeOption;
             return (
               <button
+                type="button"
                 key={themeOption}
                 role="radio"
                 aria-checked={isActive}

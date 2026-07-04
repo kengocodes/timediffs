@@ -35,6 +35,7 @@ export function WeekView() {
 
         return (
           <button
+            type="button"
             key={day.toString()}
             onClick={() => setSelectedDate(day)}
             className={cn(

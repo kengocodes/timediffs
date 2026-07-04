@@ -154,7 +154,7 @@ export function TimezonePicker() {
   const pickerContent = (
     <Command
       shouldFilter={false}
-      className="bg-white dark:bg-stone-900 [&_[cmdk-input-wrapper]]:border-slate-200 dark:[&_[cmdk-input-wrapper]]:border-stone-700 flex flex-col h-full min-h-0"
+      className="bg-white dark:bg-stone-900 [&_[data-cmdk-input-wrapper]]:border-slate-200 dark:[&_[data-cmdk-input-wrapper]]:border-stone-700 flex flex-col h-full min-h-0"
     >
       <CommandInput
         placeholder="Search timezones..."

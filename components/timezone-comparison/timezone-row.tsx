@@ -77,6 +77,7 @@ export function TimezoneRow({
         >
           {/* Drag Handle */}
           <button
+            type="button"
             className={cn(
               "flex items-center justify-center h-11 w-11 lg:h-7 lg:w-7 rounded-md text-slate-400 dark:text-stone-500 transition-colors hover:text-slate-600 dark:hover:text-stone-300 hover:bg-slate-50 dark:hover:bg-stone-800 cursor-grab active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-stone-500"
             )}
@@ -88,6 +89,7 @@ export function TimezoneRow({
 
           {/* Remove Button */}
           <button
+            type="button"
             onClick={() => onRemove(display.timezone.id)}
             className="flex items-center justify-center h-11 w-11 lg:h-7 lg:w-7 rounded-md text-slate-500 dark:text-stone-400 transition-colors hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-stone-500"
             aria-label={`Remove ${display.timezone.city}`}
@@ -97,6 +99,7 @@ export function TimezoneRow({
 
           {/* Home Button */}
           <button
+            type="button"
             onClick={() => onSetHome(display.timezone.id)}
             className={cn(
               "flex items-center justify-center h-11 w-11 lg:h-7 lg:w-7 rounded-md transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-stone-500",
@@ -143,6 +146,7 @@ export function TimezoneRow({
                 <div className="flex items-center gap-1.5 shrink-0">
                   {/* Home Button (mobile edit mode) */}
                   <button
+                    type="button"
                     onClick={() => onSetHome(display.timezone.id)}
                     className={cn(
                       "flex items-center justify-center h-8 w-8 rounded-md transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-stone-500",
@@ -165,6 +169,7 @@ export function TimezoneRow({
                   </button>
                   {/* Remove Button (mobile edit mode) */}
                   <button
+                    type="button"
                     onClick={() => onRemove(display.timezone.id)}
                     className="flex items-center justify-center h-8 w-8 rounded-md text-slate-500 dark:text-stone-400 transition-colors hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-stone-500"
                     aria-label={`Remove ${display.timezone.city}`}

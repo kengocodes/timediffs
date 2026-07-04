@@ -51,17 +51,15 @@ export function useCenterColumn({
   const isMobile = useIsMobile();
   const [centerColumnIndex, setCenterColumnIndex] = useState<number | null>(null);
   const rafRef = useRef<number | null>(null);
+  const shouldTrack = isMobile && enabled && totalColumns > 0;
 
   useEffect(() => {
-    // Only track on mobile and when enabled
-    if (!isMobile || !enabled || totalColumns === 0) {
-      setCenterColumnIndex(null);
+    if (!shouldTrack) {
       return;
     }
 
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer) {
-      setCenterColumnIndex(null);
       return;
     }
 
@@ -96,9 +94,9 @@ export function useCenterColumn({
       }
     };
     // Note: scrollContainerRef is intentionally omitted from deps - refs are stable
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMobile, enabled, totalColumns]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-doctor/exhaustive-deps
+  }, [shouldTrack, totalColumns]);
 
-  return centerColumnIndex;
+  return shouldTrack ? centerColumnIndex : null;
 }
 

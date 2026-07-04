@@ -50,6 +50,8 @@ function buildSystemPrompt(): string {
 }
 
 let supportedTimezoneIdsCache: Set<string> | null = null;
+const timezoneSnapshotFormatterCache = new Map<string, Intl.DateTimeFormat>();
+const timezoneIdValidityCache = new Map<string, boolean>();
 
 function getSupportedTimezoneIds(): Set<string> {
   if (!supportedTimezoneIdsCache) {
@@ -66,22 +68,37 @@ function isKnownTimezoneId(timezoneId: string): boolean {
   if (getSupportedTimezoneIds().has(timezoneId)) {
     return true;
   }
+  const cached = timezoneIdValidityCache.get(timezoneId);
+  if (cached !== undefined) {
+    return cached;
+  }
   // Covers aliases (e.g. legacy link names) missing from supportedValuesOf.
   try {
     new Intl.DateTimeFormat("en-US", { timeZone: timezoneId });
+    timezoneIdValidityCache.set(timezoneId, true);
     return true;
   } catch {
+    timezoneIdValidityCache.set(timezoneId, false);
     return false;
   }
 }
 
-function getTimezoneSnapshots(timezoneIds: string[], now: Date) {
-  return timezoneIds.map((timezoneId) => {
-    const localTime = new Intl.DateTimeFormat("en-US", {
+function getTimezoneSnapshotFormatter(timezoneId: string): Intl.DateTimeFormat {
+  let formatter = timezoneSnapshotFormatterCache.get(timezoneId);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat("en-US", {
       timeZone: timezoneId,
       dateStyle: "full",
       timeStyle: "long",
-    }).format(now);
+    });
+    timezoneSnapshotFormatterCache.set(timezoneId, formatter);
+  }
+  return formatter;
+}
+
+function getTimezoneSnapshots(timezoneIds: string[], now: Date) {
+  return timezoneIds.map((timezoneId) => {
+    const localTime = getTimezoneSnapshotFormatter(timezoneId).format(now);
     return { timezoneId, localTime };
   });
 }

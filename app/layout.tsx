@@ -8,6 +8,7 @@ import { Suspense } from "react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { siteConfig, createMetadata, getWebApplicationStructuredData } from "@/lib/seo";
 import { FooterWrapper } from "@/components/footer-wrapper";
+import { MotionProvider } from "@/components/motion-provider";
 import { viewport } from "./viewport";
 
 const baseMetadata = createMetadata({
@@ -75,6 +76,7 @@ export default async function RootLayout({
       </head>
       <body className={GeistSans.className}>
         <ThemeProvider>
+          <MotionProvider>
           <div className="flex min-h-[100svh] flex-col">
             <main className="flex-1">
               <NuqsAdapter>
@@ -85,6 +87,7 @@ export default async function RootLayout({
             </main>
             <FooterWrapper />
           </div>
+          </MotionProvider>
         </ThemeProvider>
       </body>
     </html>

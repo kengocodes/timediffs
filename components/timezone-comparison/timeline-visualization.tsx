@@ -176,6 +176,24 @@ export function TimelineVisualization({
     return null;
   }
 
+  const handleTimelineKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+  ) => {
+    const container = scrollContainerRef.current;
+    if (!container) {
+      return;
+    }
+
+    const scrollStep = 80;
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      container.scrollBy({ left: -scrollStep, behavior: "smooth" });
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      container.scrollBy({ left: scrollStep, behavior: "smooth" });
+    }
+  };
+
   return (
     <div
       ref={scrollContainerRef}
@@ -183,6 +201,7 @@ export function TimelineVisualization({
       tabIndex={0}
       role="region"
       aria-label="Timezone comparison timeline"
+      onKeyDown={handleTimelineKeyDown}
     >
       <div
         ref={timelineContainerRef}
