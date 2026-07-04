@@ -41,18 +41,36 @@ export function WeekView() {
               "flex flex-col items-center justify-center min-w-[40px] lg:min-w-[40px] h-9 px-1 lg:px-1.5 rounded-md transition-colors cursor-pointer shrink-0",
               "text-xs font-medium",
               isSelected
-                ? "bg-slate-900 dark:bg-stone-100 text-white dark:text-stone-900 hover:bg-slate-800 dark:hover:bg-stone-200"
+                ? "bg-slate-900 dark:bg-stone-100 hover:bg-slate-800 dark:hover:bg-stone-200"
                 : isToday
-                ? "bg-slate-100 dark:bg-stone-800 text-slate-900 dark:text-stone-100 hover:bg-slate-200 dark:hover:bg-stone-700"
-                : "text-slate-600 dark:text-stone-400 hover:bg-slate-200 dark:hover:bg-stone-700"
+                ? "bg-slate-100 dark:bg-stone-800 hover:bg-slate-200 dark:hover:bg-stone-700"
+                : "hover:bg-slate-200 dark:hover:bg-stone-700"
             )}
             aria-label={`Select ${fullLabel}`}
             title={fullLabel}
           >
-            <span className="text-[10px] leading-tight opacity-75">
+            <span
+              className={cn(
+                "text-[10px] leading-tight font-medium",
+                isSelected
+                  ? "text-white/90 dark:text-stone-900/80"
+                  : isToday
+                  ? "text-slate-600 dark:text-stone-300"
+                  : "text-slate-500 dark:text-stone-300"
+              )}
+            >
               {dayName}
             </span>
-            <span className="text-sm leading-tight font-semibold">
+            <span
+              className={cn(
+                "text-sm leading-tight font-semibold",
+                isSelected
+                  ? "text-white dark:text-stone-900"
+                  : isToday
+                  ? "text-slate-900 dark:text-stone-100"
+                  : "text-slate-800 dark:text-stone-200"
+              )}
+            >
               {day.day}
             </span>
           </button>
