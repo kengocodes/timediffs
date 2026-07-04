@@ -66,10 +66,14 @@ export default async function RootLayout({
               (function() {
                 try {
                   var theme = localStorage.getItem('timediffs-theme');
-                  var resolved = theme === 'dark' ? 'dark' : 
-                    theme === 'light' ? 'light' : 
-                    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-                  document.documentElement.classList.add(resolved);
+                  var modes = { light: 'light', dark: 'dark', indigo: 'dark', blossom: 'light' };
+                  if (!modes[theme]) {
+                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  }
+                  document.documentElement.classList.add(modes[theme]);
+                  if (theme !== 'light' && theme !== 'dark') {
+                    document.documentElement.classList.add('theme-' + theme);
+                  }
                 } catch (e) {}
               })();
             `,

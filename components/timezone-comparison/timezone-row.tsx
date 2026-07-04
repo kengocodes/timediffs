@@ -60,14 +60,13 @@ export function TimezoneRow({
           "group relative flex flex-col lg:flex-row items-stretch lg:min-h-[38px] lg:pt-0.5 lg:rounded-md gap-1",
           // Must be overflow-visible to allow horizontal scrolling on mobile
           "overflow-visible",
-          // Mobile: subtle card-like appearance (background removed to avoid overlap with info section)
+          // Mobile: card-like spacing without a border outline
           "lg:bg-transparent",
           "rounded-2xl lg:rounded-md",
           "shadow-[0_1px_3px_rgba(0,0,0,0.04)] lg:shadow-none",
-          "border border-slate-100 dark:border-stone-800 lg:border-0",
           // When dragging, always show background on mobile to ensure visibility
           isDragging && [
-            "bg-white dark:bg-stone-900",
+            "bg-background",
             "shadow-lg shadow-slate-900/10 dark:shadow-stone-950/30"
           ]
         )}
@@ -129,8 +128,10 @@ export function TimezoneRow({
             "w-screen lg:w-64 shrink-0 px-4 py-3.5 lg:px-2 lg:py-0",
             // Native sticky is compositor-driven, so the text stays perfectly
             // still during touch scrolling (JS scroll-following always lags a frame).
+            // Matches the page background so the card doesn't read as a
+            // separate surface (must stay opaque: it covers scrolling cells).
             "sticky left-0 z-20",
-            "bg-white dark:bg-stone-900",
+            "bg-background",
             "flex items-center mb-0 lg:mb-0 lg:mr-3",
             "rounded-t-2xl lg:rounded-none"
           )}

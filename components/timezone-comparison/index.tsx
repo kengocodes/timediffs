@@ -41,7 +41,7 @@ export function TimezoneComparison() {
                   variant="ghost"
                   onClick={() => setIsEditMode((editing) => !editing)}
                   className={cn(
-                    "h-9 w-9 p-0 rounded-lg text-slate-600 dark:text-stone-400",
+                    "h-11 w-11 lg:h-9 lg:w-9 p-0 rounded-lg text-slate-600 dark:text-stone-400",
                     "hover:text-slate-900 dark:hover:text-stone-100 hover:bg-slate-100 dark:hover:bg-stone-800",
                     "shrink-0 transition-colors",
                     isEditMode &&
