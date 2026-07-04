@@ -97,6 +97,61 @@ describe("commandResponseSchema", () => {
 
     expect(parsed.success).toBe(false);
   });
+
+  it("accepts bulk add, bulk remove, and replace_all actions", () => {
+    const parsed = commandResponseSchema.safeParse({
+      answerText: "Updated your timezones.",
+      actions: [
+        {
+          type: "add_timezones",
+          timezoneId: null,
+          timezoneIds: ["Europe/London", "Europe/Paris", "Europe/Berlin"],
+        },
+        {
+          type: "remove_timezones",
+          timezoneId: null,
+          timezoneIds: ["America/New_York", "America/Chicago"],
+        },
+        {
+          type: "replace_all",
+          timezoneId: null,
+          timezoneIds: ["Asia/Tokyo", "Australia/Sydney"],
+        },
+      ],
+      errorMessage: null,
+    });
+
+    expect(parsed.success).toBe(true);
+  });
+
+  it.each(["add_timezones", "remove_timezones", "replace_all"] as const)(
+    "rejects %s actions without timezoneIds",
+    (type) => {
+      const parsed = commandResponseSchema.safeParse({
+        answerText: null,
+        actions: [{ type, timezoneId: null, timezoneIds: null }],
+        errorMessage: null,
+      });
+
+      expect(parsed.success).toBe(false);
+    },
+  );
+
+  it("rejects bulk actions with more IDs than the timezone cap", () => {
+    const parsed = commandResponseSchema.safeParse({
+      answerText: null,
+      actions: [
+        {
+          type: "add_timezones",
+          timezoneId: null,
+          timezoneIds: Array.from({ length: 9 }, (_, i) => `Zone/City_${i}`),
+        },
+      ],
+      errorMessage: null,
+    });
+
+    expect(parsed.success).toBe(false);
+  });
 });
 
 describe("openRouterCommandResponseFormat", () => {

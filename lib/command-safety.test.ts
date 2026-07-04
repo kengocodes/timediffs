@@ -73,14 +73,30 @@ describe("evaluateCommandQueryPolicy", () => {
     "Compare Tokyo with London",
     "What's the time in Paris?",
     "Sydney vs Dubai",
-    "Add Singapore",
-    "London and Berlin timezones",
-    "Show Los Angeles time",
-    "India vs California",
+    "Add Tokyo, Sydney and Berlin",
+    "Remove the European zones",
+    "Sort by offset",
+    "Replace everything with US timezones",
     "what time to call my mom in Manila?",
-    "overlap hours for SF and Berlin?",
+    "add Tokyo, Sydney and Berlin",
     "compare Tokyo and New York",
   ])("allows the placeholder example %j", (query) => {
+    const result = evaluateCommandQueryPolicy(query);
+    expect(result.allowed).toBe(true);
+    expect(result.reason).toBe("in_scope");
+  });
+
+  // Bulk commands must reach the model instead of being rejected as
+  // out of scope by the keyword allowlist
+  it.each([
+    "add a bunch of time zones from europe",
+    "remove all the asian ones",
+    "keep only London and my home zone",
+    "sort east to west",
+    "swap Paris for Berlin",
+    "replace my list with the major US zones",
+    "reverse the order",
+  ])("allows the bulk command %j", (query) => {
     const result = evaluateCommandQueryPolicy(query);
     expect(result.allowed).toBe(true);
     expect(result.reason).toBe("in_scope");

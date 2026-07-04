@@ -8,25 +8,49 @@ import {
 } from "@/lib/command-constraints";
 import { MAX_TIMEZONES } from "@/lib/timezone-constraints";
 
+export const COMMAND_ACTION_TYPES = [
+  "add_timezone",
+  "add_timezones",
+  "remove_timezone",
+  "remove_timezones",
+  "replace_all",
+  "clear_all",
+  "set_home_timezone",
+  "reorder_timezones",
+] as const;
+
+export type CommandActionType = (typeof COMMAND_ACTION_TYPES)[number];
+
+/** Action types that operate on a single timezoneId. */
+const SINGLE_ID_ACTION_TYPES: ReadonlySet<CommandActionType> = new Set([
+  "add_timezone",
+  "remove_timezone",
+  "set_home_timezone",
+]);
+
+/** Action types that operate on a timezoneIds array. */
+const MULTI_ID_ACTION_TYPES: ReadonlySet<CommandActionType> = new Set([
+  "add_timezones",
+  "remove_timezones",
+  "replace_all",
+  "reorder_timezones",
+]);
+
 export const commandActionSchema = z
   .object({
-    type: z.enum([
-      "add_timezone",
-      "remove_timezone",
-      "clear_all",
-      "set_home_timezone",
-      "reorder_timezones",
-    ]),
-    timezoneId: z.string().min(1).nullable(),
-    timezoneIds: z.array(z.string().min(1)).nullable(),
+    type: z.enum(COMMAND_ACTION_TYPES),
+    timezoneId: z
+      .string()
+      .min(1)
+      .max(COMMAND_TIMEZONE_ID_MAX_CHARS)
+      .nullable(),
+    timezoneIds: z
+      .array(z.string().min(1).max(COMMAND_TIMEZONE_ID_MAX_CHARS))
+      .max(MAX_TIMEZONES)
+      .nullable(),
   })
   .superRefine((value, ctx) => {
-    if (
-      (value.type === "add_timezone" ||
-        value.type === "remove_timezone" ||
-        value.type === "set_home_timezone") &&
-      !value.timezoneId
-    ) {
+    if (SINGLE_ID_ACTION_TYPES.has(value.type) && !value.timezoneId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "timezoneId is required for this action type",
@@ -34,12 +58,12 @@ export const commandActionSchema = z
     }
 
     if (
-      value.type === "reorder_timezones" &&
+      MULTI_ID_ACTION_TYPES.has(value.type) &&
       (!value.timezoneIds || value.timezoneIds.length === 0)
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "timezoneIds is required for reorder_timezones",
+        message: "timezoneIds is required for this action type",
       });
     }
   });
@@ -83,19 +107,14 @@ export const openRouterCommandResponseFormat = {
             properties: {
               type: {
                 type: "string",
-                enum: [
-                  "add_timezone",
-                  "remove_timezone",
-                  "clear_all",
-                  "set_home_timezone",
-                  "reorder_timezones",
-                ],
+                enum: [...COMMAND_ACTION_TYPES],
               },
               timezoneId: {
                 type: ["string", "null"],
               },
               timezoneIds: {
                 type: ["array", "null"],
+                maxItems: MAX_TIMEZONES,
                 items: { type: "string" },
               },
             },

@@ -38,6 +38,13 @@ interface TimezoneContextType {
   removeTimezone: (timezoneId: string) => void;
   setHomeTimezone: (timezoneId: string) => void;
   reorderTimezones: (newOrderIds: string[]) => void;
+  /**
+   * Replaces the whole timezone list (ordered) in a single state update,
+   * optionally setting the home timezone. Bulk operations must use this
+   * instead of chaining add/remove calls: functional URL-state updates
+   * issued in the same tick read a stale snapshot and clobber each other.
+   */
+  setTimezones: (timezoneIds: string[], homeTimezoneId?: string) => void;
   detectedTimezone: string | null;
   clearDetectedTimezone: () => void;
   /** Live clock, ticking every second. */
@@ -291,6 +298,23 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
     [setUrlState]
   );
 
+  const setTimezones = useCallback(
+    (timezoneIds: string[], homeTimezoneId?: string) => {
+      const nextIds = sanitizeTimezoneIds(timezoneIds);
+      void setUrlState((old) => {
+        // Keep the current home when it survives the replacement; otherwise
+        // fall back to the explicit home or the first entry.
+        const requestedHome = homeTimezoneId ?? old.home;
+        const nextHome =
+          requestedHome && nextIds.includes(requestedHome)
+            ? requestedHome
+            : nextIds[0] ?? null;
+        return { tz: nextIds, home: nextHome };
+      });
+    },
+    [setUrlState]
+  );
+
   const handleSetSelectedDate = useCallback(
     (date: Temporal.PlainDate) => {
       // Update URL state, which will trigger selectedDate update
@@ -323,6 +347,7 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
         removeTimezone,
         setHomeTimezone,
         reorderTimezones,
+        setTimezones,
         detectedTimezone,
         clearDetectedTimezone,
         currentTime,

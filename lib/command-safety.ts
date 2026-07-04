@@ -8,6 +8,10 @@ const ALLOWLIST_PATTERNS: RegExp[] = [
   /\b(jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)\b/i,
   /\b(holiday|public holiday|bank holiday)\b/i,
   /\b(add|remove|delete|clear|set home|reorder|move)\b/i,
+  // Bulk list management verbs (sorting, replacing, keep-only)
+  /\b(sort|arrange|reverse|swap|replace|keep)\b/i,
+  // Regions used in bulk requests like "add a bunch of European time zones"
+  /\b(europe(an)?|asian?|african?|american?|australian?|pacific|atlantic|middle east|scandinavian?|nordic)\b/i,
 ];
 
 const DENYLIST_PATTERNS: RegExp[] = [

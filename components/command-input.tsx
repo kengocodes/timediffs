@@ -22,15 +22,15 @@ interface CommandInputProps {
 const DESKTOP_PLACEHOLDER_EXAMPLES = [
   'Try "New York timezone" or "Compare Tokyo with London"',
   'Ask "What\'s the time in Paris?" or "Sydney vs Dubai"',
-  'Type "Add Singapore" or "London and Berlin timezones"',
-  'Enter "Show Los Angeles time" or "India vs California"',
+  'Type "Add Tokyo, Sydney and Berlin" or "Remove the European zones"',
+  'Enter "Sort by offset" or "Replace everything with US timezones"',
 ] as const;
 
 // Mobile placeholder examples kept short for narrow screens
 const MOBILE_PLACEHOLDER_EXAMPLES = [
   "Ask in natural language",
   "e.g. what time to call my mom in Manila?",
-  "e.g. overlap hours for SF and Berlin?",
+  "e.g. add Tokyo, Sydney and Berlin",
   "e.g. compare Tokyo and New York",
 ] as const;
 
@@ -42,13 +42,7 @@ const DEFAULT_RATE_LIMIT_COOLDOWN_SECONDS = 30;
 type AbortKind = "user" | "timeout" | "unmount";
 
 export function CommandInput({ className }: CommandInputProps) {
-  const {
-    addTimezone,
-    removeTimezone,
-    reorderTimezones,
-    setHomeTimezone,
-    timezoneDisplays,
-  } = useTimezone();
+  const { setTimezones, timezoneDisplays } = useTimezone();
   const [input, setInput] = useState("");
   const placeholderIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -213,12 +207,7 @@ export function CommandInput({ className }: CommandInputProps) {
         ),
         validTimezoneIds,
         maxTimezones: MAX_TIMEZONES,
-        handlers: {
-          addTimezone,
-          removeTimezone,
-          setHomeTimezone,
-          reorderTimezones,
-        },
+        handlers: { setTimezones },
       });
       setAnswerText(payload.answerText);
       showActionSummary(actionResult.summaries);
