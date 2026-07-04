@@ -20,8 +20,6 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const THEME_STORAGE_KEY = "timediffs-theme";
-
 /**
  * Per-theme configuration. `mode` determines which base class (light/dark)
  * is applied so existing `dark:` Tailwind variants keep working; themed
@@ -37,10 +35,6 @@ export const THEME_CONFIG: Record<
   blossom: { label: "Blossom", mode: "light", metaColor: "#fdf2f5" },
 };
 
-function isTheme(value: string | null): value is Theme {
-  return value !== null && (THEMES as string[]).includes(value);
-}
-
 /**
  * Gets the system preferred color scheme.
  */
@@ -52,18 +46,16 @@ function getSystemTheme(): Theme {
 }
 
 /**
- * Theme provider component that manages the color theme with:
- * - localStorage persistence
- * - System preference detection as default (light/dark)
+ * Theme provider component that manages the color theme with system
+ * preference as the default (light/dark). Theme choice is session-only.
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
-  // Initialize theme from localStorage or system preference
+  // Initialize theme from system preference on mount
   useEffect(() => {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    setThemeState(isTheme(stored) ? stored : getSystemTheme());
+    setThemeState(getSystemTheme());
     setMounted(true);
   }, []);
 
@@ -92,12 +84,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setTheme = useCallback((newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
   }, []);
 
   // Children render immediately (including on the server) so the app is
   // never blanked while waiting for hydration. The inline script in
-  // app/layout.tsx applies the persisted theme class before first paint,
+  // app/layout.tsx applies the system theme class before first paint,
   // and the effects above take over once mounted.
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>

@@ -65,15 +65,8 @@ export default async function RootLayout({
             __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('timediffs-theme');
-                  var modes = { light: 'light', dark: 'dark', indigo: 'dark', blossom: 'light' };
-                  if (!modes[theme]) {
-                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                  }
-                  document.documentElement.classList.add(modes[theme]);
-                  if (theme !== 'light' && theme !== 'dark') {
-                    document.documentElement.classList.add('theme-' + theme);
-                  }
+                  var theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  document.documentElement.classList.add(theme);
                 } catch (e) {}
               })();
             `,
