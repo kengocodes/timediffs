@@ -70,7 +70,8 @@ export function ThemeToggle() {
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex items-center gap-2.5 w-full rounded-md px-2 py-1.5 text-sm",
+                  "flex items-center gap-2.5 w-full min-h-11 rounded-md px-2 py-1.5 text-sm",
+                  "lg:min-h-0",
                   "transition-colors cursor-pointer touch-manipulation no-tap-highlight",
                   "hover:bg-accent hover:text-accent-foreground",
                   isActive
