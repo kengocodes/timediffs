@@ -45,8 +45,6 @@ interface TimezoneContextType {
    * issued in the same tick read a stale snapshot and clobber each other.
    */
   setTimezones: (timezoneIds: string[], homeTimezoneId?: string) => void;
-  detectedTimezone: string | null;
-  clearDetectedTimezone: () => void;
   /** Live clock, ticking every second. */
   currentTime: Temporal.Instant;
   /** True when the selected date is today in the home (reference) timezone. */
@@ -120,7 +118,6 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
   });
 
   const defaultsAppliedRef = useRef(false);
-  const [detectedTimezone, setDetectedTimezone] = useState<string | null>(null);
 
   // Detect browser timezone
   const getBrowserTimezone = useCallback((): string | null => {
@@ -168,7 +165,6 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
         (tz) => tz !== browserTz
       );
       defaultIds = [browserTz, ...additionalFiltered.slice(0, 4)];
-      setDetectedTimezone(browserTz);
     } else {
       // Browser timezone not detected: use 5 backup timezones
       defaultIds = BACKUP_TIMEZONES;
@@ -331,10 +327,6 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
     [setUrlState]
   );
 
-  const clearDetectedTimezone = useCallback(() => {
-    setDetectedTimezone(null);
-  }, []);
-
   return (
     <TimezoneContext.Provider
       value={{
@@ -348,8 +340,6 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
         setHomeTimezone,
         reorderTimezones,
         setTimezones,
-        detectedTimezone,
-        clearDetectedTimezone,
         currentTime,
         isViewingToday,
         effectiveInstant,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Pencil, Check } from "lucide-react";
 import { TimelineVisualization } from "./timeline-visualization";
 import { TimezonePicker } from "./timezone-picker";
@@ -11,34 +11,14 @@ import { CopyLinkButton } from "./share-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTimezone } from "@/contexts/timezone-context";
 import { LogoIcon } from "@/components/logo-icon";
-import { Toast } from "@/components/ui/toast";
 import { CommandInput } from "@/components/command-input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { parseTimezoneId } from "@/lib/timezone";
 
 export function TimezoneComparison() {
-  const {
-    timezoneDisplays,
-    removeTimezone,
-    detectedTimezone,
-    clearDetectedTimezone,
-  } = useTimezone();
-  const [showToast, setShowToast] = useState(false);
+  const { timezoneDisplays, removeTimezone } = useTimezone();
   // Mobile-only edit mode exposing remove/home/reorder controls per row
   const [isEditMode, setIsEditMode] = useState(false);
-
-  useEffect(() => {
-    if (detectedTimezone) {
-      setShowToast(true);
-      // Clear detected timezone after showing toast to prevent re-showing
-      const timer = setTimeout(() => {
-        setShowToast(false);
-        clearDetectedTimezone();
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [detectedTimezone, clearDetectedTimezone]);
 
   return (
     <div className="bg-background flex flex-col min-h-screen lg:min-h-0">
@@ -178,18 +158,6 @@ export function TimezoneComparison() {
           </div>
         </div>
       </div>
-
-      {showToast && detectedTimezone && (
-        <Toast
-          message={`Detected your timezone: ${
-            parseTimezoneId(detectedTimezone).displayName
-          }`}
-          onClose={() => {
-            setShowToast(false);
-            clearDetectedTimezone();
-          }}
-        />
-      )}
     </div>
   );
 }
