@@ -117,21 +117,6 @@ npm start
 
 ---
 
-## Testing
-
-```bash
-# Run tests
-npm test
-
-# Run tests once
-npm run test:run
-
-# Run tests with coverage
-npm run test:coverage
-```
-
----
-
 ## Usage Examples
 
 ### Natural Language Commands

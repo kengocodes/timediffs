@@ -33,10 +33,6 @@ export class RateLimiter {
 
   constructor(private readonly options: RateLimiterOptions) {}
 
-  get trackedClientCount(): number {
-    return this.clients.size;
-  }
-
   check(clientId: string, nowMs: number = Date.now()): RateLimitDecision {
     let clientEntry = this.clients.get(clientId);
     if (clientEntry && this.isExpired(clientEntry, nowMs)) {
@@ -71,12 +67,6 @@ export class RateLimiter {
     }
     this.globalWindow.count += 1;
     return { limited: false };
-  }
-
-  /** Clears all state. Intended for tests. */
-  reset(): void {
-    this.clients.clear();
-    this.globalWindow = { count: 0, windowStartMs: 0 };
   }
 
   private isExpired(entry: WindowEntry, nowMs: number): boolean {
