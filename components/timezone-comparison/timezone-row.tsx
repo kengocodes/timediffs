@@ -1,12 +1,10 @@
 "use client";
 
-import { useRef } from "react";
 import { X, Home, GripVertical, GripHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Temporal } from "@/lib/temporal";
 import type { TimezoneDisplay } from "@/types";
 import { HourCell } from "./hour-cell";
-import { useScrollFollow } from "@/hooks/use-scroll-follow";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { useTimezone } from "@/contexts/timezone-context";
 
@@ -21,7 +19,6 @@ interface TimezoneRowProps {
   isEditMode?: boolean;
   highlightedColumnIndex?: number | null;
   centerColumnIndex?: number | null;
-  scrollContainerRef?: React.RefObject<HTMLElement | null>;
   currentHourIndex?: number | null;
   referenceTimezoneId?: string;
 }
@@ -40,26 +37,16 @@ export function TimezoneRow({
   isEditMode = false,
   highlightedColumnIndex = null,
   centerColumnIndex = null,
-  scrollContainerRef,
   currentHourIndex = null,
   referenceTimezoneId,
 }: TimezoneRowProps) {
   const isMobile = useIsMobile();
   const { isViewingToday } = useTimezone();
-  const infoRef = useRef<HTMLDivElement | null>(null);
   const fullLocationLabel = display.timezone.country
     ? holidayName
       ? `${display.timezone.country} · ${holidayName}`
       : display.timezone.country
     : holidayName ?? "";
-  
-  // Use JavaScript-based scroll following for mobile to keep info section visible
-  // This is more reliable than CSS sticky for the vertical flex layout on mobile
-  useScrollFollow(
-    scrollContainerRef || { current: null },
-    infoRef,
-    isMobile && !isDragging
-  );
 
   // The current hour column is shared by all rows (the timeline is anchored
   // to the reference timezone), so use the index computed by the parent.
@@ -135,11 +122,14 @@ export function TimezoneRow({
 
         {/* City/Country + Current Time - Uses JS transform on mobile, sticky on desktop */}
         <div
-          ref={infoRef}
           className={cn(
-            "w-full lg:w-64 shrink-0 px-4 py-3.5 lg:px-2 lg:py-0",
-            // Only use sticky on desktop; mobile uses JS-based scroll following via useScrollFollow
-            "lg:sticky lg:left-0 z-20",
+            // Explicit viewport width on mobile (not w-full): the row is wider than
+            // the viewport, and a sticky element needs free space in its containing
+            // block to slide within, otherwise sticky is a no-op.
+            "w-screen lg:w-64 shrink-0 px-4 py-3.5 lg:px-2 lg:py-0",
+            // Native sticky is compositor-driven, so the text stays perfectly
+            // still during touch scrolling (JS scroll-following always lags a frame).
+            "sticky left-0 z-20",
             "bg-white dark:bg-stone-900",
             "flex items-center mb-0 lg:mb-0 lg:mr-3",
             "rounded-t-2xl lg:rounded-none"

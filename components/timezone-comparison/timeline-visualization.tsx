@@ -187,7 +187,9 @@ export function TimelineVisualization({
       <div
         ref={timelineContainerRef}
         data-timeline-container
-        className="relative min-w-0 lg:min-w-[1650px] xl:min-w-0 lg:mt-10"
+        // min-w-max on mobile: rows must be as wide as the overflowing timeline
+        // strip so the sticky info block has room to slide within its row.
+        className="relative min-w-max lg:min-w-[1650px] xl:min-w-0 lg:mt-10"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
@@ -251,7 +253,6 @@ export function TimelineVisualization({
                     onRemove={onRemoveTimezone}
                     onSetHome={setHomeTimezone}
                     isEditMode={isEditMode}
-                    scrollContainerRef={scrollContainerRef}
                     currentHourIndex={currentHourIndex}
                     referenceTimezoneId={referenceTimezone?.timezone.id}
                   />

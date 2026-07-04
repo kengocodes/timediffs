@@ -17,7 +17,6 @@ interface SortableTimezoneRowProps {
   highlightedColumnIndex?: number | null;
   centerColumnIndex?: number | null;
   isEditMode?: boolean;
-  scrollContainerRef?: React.RefObject<HTMLElement | null>;
   currentHourIndex?: number | null;
   referenceTimezoneId?: string;
 }
@@ -31,7 +30,6 @@ export function SortableTimezoneRow({
   highlightedColumnIndex,
   centerColumnIndex,
   isEditMode = false,
-  scrollContainerRef,
   currentHourIndex = null,
   referenceTimezoneId,
 }: SortableTimezoneRowProps) {
@@ -79,7 +77,6 @@ export function SortableTimezoneRow({
         dragHandleProps={{ ...attributes, ...listeners }}
         isDragging={isDragging}
         isEditMode={isEditMode}
-        scrollContainerRef={scrollContainerRef}
         currentHourIndex={currentHourIndex}
         referenceTimezoneId={referenceTimezoneId}
       />

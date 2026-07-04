@@ -418,7 +418,7 @@ export function CommandInput({ className }: CommandInputProps) {
               id={helperTextId}
               className="text-xs text-slate-500 dark:text-stone-400"
             >
-              Ask in natural language • Powered by OpenRouter.
+              Ask in natural language • Powered by OpenAI gpt-5.4-nano.
             </p>
           )}
           {charCounter}
