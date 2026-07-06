@@ -31,6 +31,7 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { SortableTimezoneRow } from "./sortable-timezone-row";
 import { TimezoneRow } from "./timezone-row";
 import { useHolidays } from "@/hooks/use-holidays";
+import { RotateCcw } from "lucide-react";
 
 interface TimelineVisualizationProps {
   onRemoveTimezone: (timezoneId: string) => void;
@@ -81,6 +82,9 @@ export function TimelineVisualization({
     reorderTimezones,
     selectedDate,
     currentTime,
+    selectedTimelineInstant,
+    setSelectedTimelineInstant,
+    clearSelectedTimelineInstant,
     isViewingToday,
     effectiveInstant,
   } = useTimezone();
@@ -135,8 +139,10 @@ export function TimelineVisualization({
       return null;
     }
 
-    return findHourIndexForInstant(referenceHours, currentTime);
-  }, [isViewingToday, referenceTimezone, referenceHours, currentTime]);
+    return findHourIndexForInstant(referenceHours, effectiveInstant);
+  }, [isViewingToday, referenceTimezone, referenceHours, effectiveInstant]);
+
+  const hasPinnedTimelineInstant = selectedTimelineInstant !== null;
 
   // Scroll to current time on mobile - always call hook, even if disabled
   useScrollToCurrentTime({
@@ -194,6 +200,10 @@ export function TimelineVisualization({
     }
   };
 
+  const handleSelectReferenceHour = (referenceHour: Temporal.ZonedDateTime) => {
+    setSelectedTimelineInstant(referenceHour.toInstant());
+  };
+
   return (
     <div
       ref={scrollContainerRef}
@@ -220,13 +230,28 @@ export function TimelineVisualization({
         />
 
         {/* Exact time indicator showing precise current time position */}
-        {referenceTimezone && (
+        {referenceTimezone && !hasPinnedTimelineInstant && (
           <ExactTimeIndicator
             position={exactTimePosition}
             totalColumns={referenceHours.length}
             referenceTimezoneId={referenceTimezone.timezone.id}
           />
         )}
+
+        {hasPinnedTimelineInstant ? (
+          <div className="flex justify-end mb-2 pr-3 lg:pr-0">
+            <button
+              type="button"
+              onClick={clearSelectedTimelineInstant}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-stone-400 dark:hover:text-stone-100 dark:hover:bg-stone-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:focus-visible:ring-stone-500"
+              aria-label="Return to original timeline time"
+              title="Return to original timeline time"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Reset time</span>
+            </button>
+          </div>
+        ) : null}
 
         <DndContext
           sensors={sensors}
@@ -267,6 +292,7 @@ export function TimelineVisualization({
                     display={display}
                     holidayName={holidayNamesByTimezone[display.timezone.id]}
                     referenceHours={referenceHours}
+                    onSelectReferenceHour={handleSelectReferenceHour}
                     highlightedColumnIndex={highlightedColumnIndex}
                     centerColumnIndex={centerColumnIndex}
                     onRemove={onRemoveTimezone}
@@ -288,6 +314,7 @@ export function TimelineVisualization({
                     holidayNamesByTimezone[activeDisplay.timezone.id]
                   }
                   referenceHours={referenceHours}
+                  onSelectReferenceHour={handleSelectReferenceHour}
                   highlightedColumnIndex={highlightedColumnIndex}
                   centerColumnIndex={centerColumnIndex}
                   onRemove={onRemoveTimezone}
