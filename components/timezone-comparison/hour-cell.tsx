@@ -9,6 +9,7 @@ interface HourCellProps {
   timezoneId: string;
   hourIndex: number;
   totalHours: number;
+  onSelectReferenceHour?: (referenceHour: Temporal.ZonedDateTime) => void;
   isHighlightedMobile?: boolean;
   isCenterColumn?: boolean;
   isCurrentHour?: boolean;
@@ -24,6 +25,7 @@ export function HourCell({
   timezoneId,
   hourIndex,
   totalHours,
+  onSelectReferenceHour,
   isHighlightedMobile = false,
   isCenterColumn = false,
   isCurrentHour = false,
@@ -66,9 +68,12 @@ export function HourCell({
   const isLastHour = hourIndex === totalHours - 1;
 
   return (
-    <div
+    <button
+      type="button"
+      onClick={() => onSelectReferenceHour?.(referenceHour)}
       className={cn(
         "relative flex flex-col items-center justify-center shrink-0",
+        "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60",
         "h-[56px] lg:h-auto lg:min-h-[38px]",
         // Mobile: Each hour is 1/24 of timeline width (timeline shows 7 hours visible)
         "w-[calc(100%/24)]",
@@ -83,6 +88,10 @@ export function HourCell({
         isFirstHour && "rounded-bl-xl lg:rounded-l-md lg:rounded-bl-md",
         isLastHour && "rounded-br-xl lg:rounded-r-md lg:rounded-br-md"
       )}
+      aria-label={`Set all timezones to ${localTime.toLocaleString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      })}`}
       title={`${hourInTz}:00`}
     >
       {isHighlightedMobile ? (
@@ -141,6 +150,6 @@ export function HourCell({
           </span>
         </div>
       )}
-    </div>
+    </button>
   );
 }

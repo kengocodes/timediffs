@@ -14,6 +14,7 @@ interface TimezoneRowProps {
   referenceHours: Temporal.ZonedDateTime[];
   onRemove: (timezoneId: string) => void;
   onSetHome: (timezoneId: string) => void;
+  onSelectReferenceHour?: (referenceHour: Temporal.ZonedDateTime) => void;
   dragHandleProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
   isDragging?: boolean;
   isEditMode?: boolean;
@@ -32,6 +33,7 @@ export function TimezoneRow({
   referenceHours,
   onRemove,
   onSetHome,
+  onSelectReferenceHour,
   dragHandleProps,
   isDragging = false,
   isEditMode = false,
@@ -277,6 +279,7 @@ export function TimezoneRow({
                   timezoneId={display.timezone.id}
                   hourIndex={hourIndex}
                   totalHours={referenceHours.length}
+                  onSelectReferenceHour={onSelectReferenceHour}
                   isHighlightedMobile={
                     isMobile &&
                     highlightedColumnIndex !== null &&
