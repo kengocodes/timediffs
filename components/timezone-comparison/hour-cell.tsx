@@ -32,10 +32,23 @@ export function HourCell({
 }: HourCellProps) {
   const { timeFormat } = useTimezone();
   const localTime = referenceHour.withTimeZone(timezoneId);
+  const previousLocalTime = referenceHour
+    .subtract({ hours: 1 })
+    .withTimeZone(timezoneId);
   const hourInTz = localTime.hour;
+  const minuteInTz = localTime.minute;
+  const minuteLabel = minuteInTz.toString().padStart(2, "0");
   const hour12 = ((hourInTz + 11) % 12) + 1;
   const amPm = hourInTz < 12 ? "am" : "pm";
-  const isNewDay = hourInTz === 0;
+  const isNewDay =
+    localTime.year !== previousLocalTime.year ||
+    localTime.month !== previousLocalTime.month ||
+    localTime.day !== previousLocalTime.day;
+  const hourLabel24 =
+    minuteInTz === 0
+      ? hourInTz.toString().padStart(2, "0")
+      : `${hourInTz.toString().padStart(2, "0")}:${minuteLabel}`;
+  const hourLabel12 = minuteInTz === 0 ? String(hour12) : `${hour12}:${minuteLabel}`;
 
   const monthLabel = isNewDay
     ? localTime.toLocaleString("en-US", { month: "short" })
@@ -92,7 +105,7 @@ export function HourCell({
         hour: "numeric",
         minute: "2-digit",
       })}`}
-      title={`${hourInTz}:00`}
+      title={`${hourInTz.toString().padStart(2, "0")}:${minuteLabel}`}
     >
       {isHighlightedMobile ? (
         <div className="absolute inset-0 bg-slate-400/20 dark:bg-stone-400/20 pointer-events-none z-0" />
@@ -127,7 +140,7 @@ export function HourCell({
               textPrimaryClass
             )}
           >
-            {hourInTz.toString().padStart(2, "0")}
+            {hourLabel24}
           </span>
         </div>
       ) : (
@@ -138,7 +151,7 @@ export function HourCell({
               textPrimaryClass
             )}
           >
-            {hour12}
+            {hourLabel12}
           </span>
           <span
             className={cn(
