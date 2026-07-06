@@ -239,7 +239,7 @@ export function TimelineVisualization({
         )}
 
         {hasPinnedTimelineInstant ? (
-          <div className="flex justify-end mb-2 pr-3 lg:pr-0">
+          <div className="sticky right-0 z-20 mb-2 flex justify-end pr-3 lg:pr-0">
             <button
               type="button"
               onClick={clearSelectedTimelineInstant}
