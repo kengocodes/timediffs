@@ -47,6 +47,12 @@ interface TimezoneContextType {
   setTimezones: (timezoneIds: string[], homeTimezoneId?: string) => void;
   /** Live clock, ticking every second. */
   currentTime: Temporal.Instant;
+  /** Timeline-selected instant, used when the user pins a specific hour. */
+  selectedTimelineInstant: Temporal.Instant | null;
+  /** Pin all timezone displays to a specific timeline instant. */
+  setSelectedTimelineInstant: (instant: Temporal.Instant | null) => void;
+  /** Clear pinned timeline instant and return to default display behavior. */
+  clearSelectedTimelineInstant: () => void;
   /** True when the selected date is today in the home (reference) timezone. */
   isViewingToday: boolean;
   /**
@@ -175,6 +181,8 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
 
   // Live clock, updated every second for smooth real-time indicator movement
   const [currentTime, setCurrentTime] = useState(() => Temporal.Now.instant());
+  const [selectedTimelineInstant, setSelectedTimelineInstant] =
+    useState<Temporal.Instant | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -200,13 +208,22 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
   );
 
   const effectiveInstant = useMemo(() => {
+    if (selectedTimelineInstant) {
+      return selectedTimelineInstant;
+    }
     if (isViewingToday) {
       return currentTime;
     }
     // Midnight of the selected date in the home timezone, matching the
     // anchor used by getTimelineHours for the timeline grid.
     return selectedDate.toZonedDateTime(homeTimezoneId).toInstant();
-  }, [isViewingToday, currentTime, selectedDate, homeTimezoneId]);
+  }, [
+    selectedTimelineInstant,
+    isViewingToday,
+    currentTime,
+    selectedDate,
+    homeTimezoneId,
+  ]);
 
   // Use format from URL or default to 12h
   const timeFormat = useMemo(() => {
@@ -327,6 +344,10 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
     [setUrlState]
   );
 
+  const clearSelectedTimelineInstant = useCallback(() => {
+    setSelectedTimelineInstant(null);
+  }, []);
+
   return (
     <TimezoneContext.Provider
       value={{
@@ -341,6 +362,9 @@ export function TimezoneProvider({ children }: { children: React.ReactNode }) {
         reorderTimezones,
         setTimezones,
         currentTime,
+        selectedTimelineInstant,
+        setSelectedTimelineInstant,
+        clearSelectedTimelineInstant,
         isViewingToday,
         effectiveInstant,
       }}

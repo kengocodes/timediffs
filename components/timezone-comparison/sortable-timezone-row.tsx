@@ -14,6 +14,7 @@ interface SortableTimezoneRowProps {
   referenceHours: Temporal.ZonedDateTime[];
   onRemove: (timezoneId: string) => void;
   onSetHome: (timezoneId: string) => void;
+  onSelectReferenceHour?: (referenceHour: Temporal.ZonedDateTime) => void;
   highlightedColumnIndex?: number | null;
   centerColumnIndex?: number | null;
   isEditMode?: boolean;
@@ -27,6 +28,7 @@ export function SortableTimezoneRow({
   referenceHours,
   onRemove,
   onSetHome,
+  onSelectReferenceHour,
   highlightedColumnIndex,
   centerColumnIndex,
   isEditMode = false,
@@ -72,6 +74,7 @@ export function SortableTimezoneRow({
         referenceHours={referenceHours}
         onRemove={onRemove}
         onSetHome={onSetHome}
+        onSelectReferenceHour={onSelectReferenceHour}
         highlightedColumnIndex={highlightedColumnIndex}
         centerColumnIndex={centerColumnIndex}
         dragHandleProps={{ ...attributes, ...listeners }}
