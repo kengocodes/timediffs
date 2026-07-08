@@ -41,6 +41,11 @@ export function ColumnHighlightRing({
 
   // Measure the flex container's actual position and width
   useEffect(() => {
+    // No ring on mobile, so skip measuring; render guards on isMobile too
+    if (isMobile) {
+      return;
+    }
+
     const measureContainer = () => {
       const flexContainer = document.querySelector(
         "[data-timeline-flex-container]"
@@ -56,24 +61,47 @@ export function ColumnHighlightRing({
 
       const containerRect = flexContainer.getBoundingClientRect();
       const parentRect = parentContainer.getBoundingClientRect();
-
-      setMeasurements({
+      const nextMeasurements = {
         left: containerRect.left - parentRect.left,
         width: flexContainer.offsetWidth,
+      };
+
+      setMeasurements((current) => {
+        if (
+          current &&
+          current.left === nextMeasurements.left &&
+          current.width === nextMeasurements.width
+        ) {
+          return current;
+        }
+
+        return nextMeasurements;
       });
     };
 
     measureContainer();
     window.addEventListener("resize", measureContainer);
 
-    // Re-measure after a short delay to ensure layout is complete
-    const timeoutId = setTimeout(measureContainer, 100);
+    // Track layout changes of the hour strip (e.g. rows added/removed,
+    // viewport-driven reflow) that don't fire a window resize
+    const flexContainer = document.querySelector(
+      "[data-timeline-flex-container]"
+    );
+    const resizeObserver = new ResizeObserver(measureContainer);
+    if (flexContainer) {
+      resizeObserver.observe(flexContainer);
+    }
+
+    // Re-measure after the row entry animation settles: getBoundingClientRect
+    // includes the entry scale transform, so earlier reads are shifted
+    const timeoutId = setTimeout(measureContainer, 350);
 
     return () => {
       window.removeEventListener("resize", measureContainer);
+      resizeObserver.disconnect();
       clearTimeout(timeoutId);
     };
-  }, [isMobile]);
+  }, [isMobile, columnIndex, totalColumns]);
 
   // Hide on mobile screens
   if (isMobile || columnIndex === null || totalColumns === 0 || !measurements) {
